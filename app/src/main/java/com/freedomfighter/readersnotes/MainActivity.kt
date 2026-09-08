@@ -56,8 +56,17 @@ class MainActivity : ComponentActivity() {
         if (app.store.all().any { it.dirty || it.deleted }) app.sync()
     }
 
-    /** Shared text becomes a new note. */
+    /** Shared text becomes a new note; our own provider URI (the launcher's tile) opens that note. */
     private fun handle(intent: Intent?) {
+        val data = intent?.data
+        if (intent?.action == Intent.ACTION_VIEW && data?.authority == "com.freedomfighter.readersnotes") {
+            val app = application as App
+            val id = data.lastPathSegment
+            nav.home()
+            if (id == "new") nav.push(Screen.Edit(app.store.create()))
+            else if (id != null && app.store.get(id) != null) nav.push(Screen.Edit(id))
+            intent.action = null; return
+        }
         if (intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("text/") == true) {
             val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
             val subject = intent.getStringExtra(Intent.EXTRA_SUBJECT)

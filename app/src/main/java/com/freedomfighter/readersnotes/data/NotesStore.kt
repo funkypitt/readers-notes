@@ -36,7 +36,9 @@ class NotesStore(context: Context) {
     val notes: StateFlow<List<Note>> = _notes
 
     private fun loadIndex(): List<Note> = runCatching { json.decodeFromString<Index>(indexFile.readText()).notes }.getOrDefault(emptyList())
-    private fun saveIndex(all: List<Note>) { indexFile.writeText(json.encodeToString(Index(all))); _notes.value = all }
+    private val changeUri = android.net.Uri.parse("content://com.freedomfighter.readersnotes/notes")
+    private val resolver = context.contentResolver
+    private fun saveIndex(all: List<Note>) { indexFile.writeText(json.encodeToString(Index(all))); _notes.value = all; resolver.notifyChange(changeUri, null) }
 
     private fun file(id: String) = File(dir, "$id.txt")
     fun text(id: String): String = runCatching { file(id).readText() }.getOrDefault("")

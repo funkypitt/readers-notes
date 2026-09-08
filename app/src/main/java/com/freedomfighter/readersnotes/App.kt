@@ -15,19 +15,16 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 class App : Application() {
-    lateinit var prefs: Prefs
-    lateinit var store: NotesStore
+    // lazy: the content provider can be queried before Application.onCreate has run
+    val prefs: Prefs by lazy { Prefs(this) }
+    val store: NotesStore by lazy { NotesStore(this) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val syncLock = Mutex()
     /** One line for the status row: "syncing…", "synced 21:03", or the error. */
     val status = MutableStateFlow("")
     val syncing = MutableStateFlow(false)
 
-    override fun onCreate() {
-        super.onCreate()
-        prefs = Prefs(this)
-        store = NotesStore(this)
-    }
+    override fun onCreate() { super.onCreate(); prefs; store }
 
     fun sync() {
         val s = prefs.settings.value

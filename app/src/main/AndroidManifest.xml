@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Only apps signed with the same key (Reader's Launcher) may read the notes. -->
+    <permission
+        android:name="com.freedomfighter.readersnotes.permission.ACCESS"
+        android:protectionLevel="signature" />
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -20,6 +24,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- The launcher's tile: content://com.freedomfighter.readersnotes/notes/<id|new>. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="com.freedomfighter.readersnotes" />
+            </intent-filter>
             <!-- Shared text becomes a note. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -27,5 +37,10 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+        <provider
+            android:name=".provider.NotesProvider"
+            android:authorities="com.freedomfighter.readersnotes"
+            android:exported="true"
+            android:permission="com.freedomfighter.readersnotes.permission.ACCESS" />
     </application>
 </manifest>
