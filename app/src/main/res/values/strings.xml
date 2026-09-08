@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Reader\'s Notes</string>
+    <string name="app_title">notes</string>
+    <string name="action_ok">ok</string>
+    <string name="action_cancel">cancel</string>
+    <string name="new_note">+ new note</string>
+    <string name="new_note_title">new note</string>
+    <string name="untitled">untitled</string>
+    <string name="write_here">write here. The first line is the title.</string>
+    <string name="empty">nothing yet. The first line of a note is its title.</string>
+    <string name="nothing_found">nothing found</string>
+    <string name="find">find</string>
+    <string name="sync_now">sync now</string>
+    <string name="not_synced">on this phone only — tap to set up a WebDAV folder</string>
+    <string name="share">share</string>
+    <string name="delete">delete</string>
+    <string name="settings">settings</string>
+    <string name="theme_dark">white on black</string>
+    <string name="theme_light">black on white</string>
+    <string name="colours">colours</string>
+    <string name="text_size">text size</string>
+    <string name="font">font</string>
+    <string name="haptics">haptic tick</string>
+    <string name="on">on</string>
+    <string name="off">off</string>
+    <string name="about">plain-text notes, one file each, in a WebDAV folder</string>
+    <string name="account_hint">A WebDAV folder keeps the notes in step with your other devices. kDrive: server https://ID.connect.kdrive.infomaniak.com (the ID is the number in the kDrive web address), your Infomaniak login, and an application password if two-factor authentication is on. Nextcloud and any WebDAV server work the same way.</string>
+    <string name="server">server</string>
+    <string name="username">username</string>
+    <string name="password">password</string>
+    <string name="folder">folder on the server</string>
+    <string name="sync_on_open">sync when the app opens</string>
+</resources>
