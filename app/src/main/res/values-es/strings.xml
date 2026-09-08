@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_title">notas</string>
+    <string name="action_ok">ok</string>
+    <string name="action_cancel">cancelar</string>
+    <string name="new_note">+ nueva nota</string>
+    <string name="new_note_title">nueva nota</string>
+    <string name="untitled">sin título</string>
+    <string name="write_here">escribe aquí. La primera línea es el título.</string>
+    <string name="empty">nada todavía. La primera línea de una nota es su título.</string>
+    <string name="nothing_found">nada encontrado</string>
+    <string name="find">buscar</string>
+    <string name="sync_now">sincronizar ahora</string>
+    <string name="not_synced">solo en este teléfono — toca para configurar una carpeta WebDAV</string>
+    <string name="share">compartir</string>
+    <string name="delete">eliminar</string>
+    <string name="settings">ajustes</string>
+    <string name="theme_dark">blanco sobre negro</string>
+    <string name="theme_light">negro sobre blanco</string>
+    <string name="colours">colores</string>
+    <string name="text_size">tamaño del texto</string>
+    <string name="font">fuente</string>
+    <string name="haptics">respuesta háptica</string>
+    <string name="on">sí</string>
+    <string name="off">no</string>
+    <string name="about">notas en texto plano, un archivo cada una, en una carpeta WebDAV</string>
+    <string name="account_hint">Una carpeta WebDAV mantiene las notas al día en tus otros dispositivos. kDrive: servidor https://ID.connect.kdrive.infomaniak.com (el ID es el número de la dirección web de kDrive), tu usuario de Infomaniak y una contraseña de aplicación si tienes la verificación en dos pasos. Nextcloud y cualquier servidor WebDAV funcionan igual.</string>
+    <string name="server">servidor</string>
+    <string name="username">usuario</string>
+    <string name="password">contraseña</string>
+    <string name="folder">carpeta en el servidor</string>
+    <string name="sync_on_open">sincronizar al abrir</string>
+</resources>

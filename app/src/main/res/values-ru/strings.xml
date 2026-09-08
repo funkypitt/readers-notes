@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_title">заметки</string>
+    <string name="action_ok">ок</string>
+    <string name="action_cancel">отмена</string>
+    <string name="new_note">+ новая заметка</string>
+    <string name="new_note_title">новая заметка</string>
+    <string name="untitled">без названия</string>
+    <string name="write_here">пишите здесь. Первая строка — название.</string>
+    <string name="empty">пока пусто. Первая строка заметки — её название.</string>
+    <string name="nothing_found">ничего не найдено</string>
+    <string name="find">найти</string>
+    <string name="sync_now">синхронизировать</string>
+    <string name="not_synced">только на этом телефоне — нажмите, чтобы настроить папку WebDAV</string>
+    <string name="share">поделиться</string>
+    <string name="delete">удалить</string>
+    <string name="settings">настройки</string>
+    <string name="theme_dark">белым по чёрному</string>
+    <string name="theme_light">чёрным по белому</string>
+    <string name="colours">цвета</string>
+    <string name="text_size">размер текста</string>
+    <string name="font">шрифт</string>
+    <string name="haptics">лёгкая вибрация</string>
+    <string name="on">вкл</string>
+    <string name="off">выкл</string>
+    <string name="about">заметки в простом тексте, по файлу на каждую, в папке WebDAV</string>
+    <string name="account_hint">Папка WebDAV держит заметки в одном состоянии на всех устройствах. kDrive: сервер https://ID.connect.kdrive.infomaniak.com (ID — число в веб-адресе kDrive), ваш логин Infomaniak и пароль приложения при двухфакторной аутентификации. Nextcloud и любой WebDAV-сервер работают так же.</string>
+    <string name="server">сервер</string>
+    <string name="username">имя пользователя</string>
+    <string name="password">пароль</string>
+    <string name="folder">папка на сервере</string>
+    <string name="sync_on_open">синхронизировать при открытии</string>
+</resources>

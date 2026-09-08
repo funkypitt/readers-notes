@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_title">Notizen</string>
+    <string name="action_ok">ok</string>
+    <string name="action_cancel">abbrechen</string>
+    <string name="new_note">+ neue Notiz</string>
+    <string name="new_note_title">neue Notiz</string>
+    <string name="untitled">ohne Titel</string>
+    <string name="write_here">hier schreiben. Die erste Zeile ist der Titel.</string>
+    <string name="empty">noch nichts. Die erste Zeile einer Notiz ist ihr Titel.</string>
+    <string name="nothing_found">nichts gefunden</string>
+    <string name="find">suchen</string>
+    <string name="sync_now">jetzt synchronisieren</string>
+    <string name="not_synced">nur auf diesem Telefon — antippen, um einen WebDAV-Ordner einzurichten</string>
+    <string name="share">teilen</string>
+    <string name="delete">löschen</string>
+    <string name="settings">Einstellungen</string>
+    <string name="theme_dark">Weiß auf Schwarz</string>
+    <string name="theme_light">Schwarz auf Weiß</string>
+    <string name="colours">Farben</string>
+    <string name="text_size">Textgröße</string>
+    <string name="font">Schrift</string>
+    <string name="haptics">haptisches Feedback</string>
+    <string name="on">an</string>
+    <string name="off">aus</string>
+    <string name="about">Klartext-Notizen, je eine Datei, in einem WebDAV-Ordner</string>
+    <string name="account_hint">Ein WebDAV-Ordner hält die Notizen auf allen Geräten gleich. kDrive: Server https://ID.connect.kdrive.infomaniak.com (die ID ist die Zahl in der kDrive-Webadresse), Ihr Infomaniak-Login und bei Zwei-Faktor-Anmeldung ein App-Passwort. Nextcloud und jeder WebDAV-Server funktionieren genauso.</string>
+    <string name="server">Server</string>
+    <string name="username">Benutzername</string>
+    <string name="password">Passwort</string>
+    <string name="folder">Ordner auf dem Server</string>
+    <string name="sync_on_open">beim Öffnen synchronisieren</string>
+</resources>

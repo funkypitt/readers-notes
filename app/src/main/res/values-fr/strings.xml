@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_title">notes</string>
+    <string name="action_ok">ok</string>
+    <string name="action_cancel">annuler</string>
+    <string name="new_note">+ nouvelle note</string>
+    <string name="new_note_title">nouvelle note</string>
+    <string name="untitled">sans titre</string>
+    <string name="write_here">écrire ici. La première ligne est le titre.</string>
+    <string name="empty">rien pour l\'instant. La première ligne d\'une note est son titre.</string>
+    <string name="nothing_found">rien trouvé</string>
+    <string name="find">chercher</string>
+    <string name="sync_now">synchroniser</string>
+    <string name="not_synced">sur ce téléphone seulement — toucher pour configurer un dossier WebDAV</string>
+    <string name="share">partager</string>
+    <string name="delete">supprimer</string>
+    <string name="settings">réglages</string>
+    <string name="theme_dark">blanc sur noir</string>
+    <string name="theme_light">noir sur blanc</string>
+    <string name="colours">couleurs</string>
+    <string name="text_size">taille du texte</string>
+    <string name="font">police</string>
+    <string name="haptics">vibration légère</string>
+    <string name="on">oui</string>
+    <string name="off">non</string>
+    <string name="about">notes en texte brut, un fichier chacune, dans un dossier WebDAV</string>
+    <string name="account_hint">Un dossier WebDAV garde les notes à jour sur vos autres appareils. kDrive : serveur https://ID.connect.kdrive.infomaniak.com (l\'ID est le nombre dans l\'adresse web de kDrive), votre identifiant Infomaniak et un mot de passe d\'application si la double authentification est active. Nextcloud et tout serveur WebDAV fonctionnent de la même façon.</string>
+    <string name="server">serveur</string>
+    <string name="username">identifiant</string>
+    <string name="password">mot de passe</string>
+    <string name="folder">dossier sur le serveur</string>
+    <string name="sync_on_open">synchroniser à l\'ouverture</string>
+</resources>
