@@ -1,0 +1,1 @@
+Black-and-white plain-text notes for e-ink, one .txt each, synced over WebDAV

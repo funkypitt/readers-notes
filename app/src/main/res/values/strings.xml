@@ -25,6 +25,7 @@
     <string name="on">on</string>
     <string name="off">off</string>
     <string name="about">plain-text notes, one file each, in a WebDAV folder</string>
+    <string name="credits">Pierre Gallaz · developed with Claude Code</string>
     <string name="account_hint">A WebDAV folder keeps the notes in step with your other devices. kDrive: server https://ID.connect.kdrive.infomaniak.com (the ID is the number in the kDrive web address), your Infomaniak login, and an application password if two-factor authentication is on. Nextcloud and any WebDAV server work the same way.</string>
     <string name="server">server</string>
     <string name="username">username</string>

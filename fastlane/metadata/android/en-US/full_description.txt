@@ -1,0 +1,11 @@
+Plain-text notes, black and white, text only, made for e-ink phones and for anyone who wants words without decoration. No icons, no colours: white on black or black on white, serif, sans or mono, three text sizes. Part of the Reader's family of apps (Reader's Launcher, Tasks, Calendar, Books…).
+
+One list, one page. A note is a text file; its first line is its title. The list shows the title, when it changed and the next line. Tap to write, long press to share or delete. The ⋯ menu finds, syncs, flips white on black. No formatting, no folders, no colours. Shared text from another app becomes a new note.
+
+Sync: notes live in a folder on any WebDAV server, one .txt file each, so a desktop or another phone sees plain files. Infomaniak kDrive, Nextcloud and other servers take their usual address; the folder (default "Notes") is created if missing. The sync runs when the app opens, when a note is left, and from the menu. Etags decide who moved: a note changed here and untouched there is uploaded; changed there and untouched here is downloaded; changed on both sides keeps the server's text as a second note ("… (server copy)") and uploads yours. The status line under the list says what happened, or what went wrong. Without a server the notes simply stay on the phone.
+
+Two standard home-screen widgets for any launcher: the latest note (one line, + for a new one) and the latest notes as a list. Reader's Launcher shows the same on its notes tile.
+
+No account with anyone but your own server, no tracking. English, French, German, Spanish, Portuguese, Russian. Free software, MIT licence.
+
+Pierre Gallaz · developed with Claude Code

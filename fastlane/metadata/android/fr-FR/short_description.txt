@@ -1,0 +1,1 @@
+Notes noir et blanc en texte brut pour e-ink, un .txt chacune, sync WebDAV

@@ -24,6 +24,7 @@
     <string name="on">an</string>
     <string name="off">aus</string>
     <string name="about">Klartext-Notizen, je eine Datei, in einem WebDAV-Ordner</string>
+    <string name="credits">Pierre Gallaz · entwickelt mit Claude Code</string>
     <string name="account_hint">Ein WebDAV-Ordner hält die Notizen auf allen Geräten gleich. kDrive: Server https://ID.connect.kdrive.infomaniak.com (die ID ist die Zahl in der kDrive-Webadresse), Ihr Infomaniak-Login und bei Zwei-Faktor-Anmeldung ein App-Passwort. Nextcloud und jeder WebDAV-Server funktionieren genauso.</string>
     <string name="server">Server</string>
     <string name="username">Benutzername</string>

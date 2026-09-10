@@ -24,6 +24,7 @@
     <string name="on">вкл</string>
     <string name="off">выкл</string>
     <string name="about">заметки в простом тексте, по файлу на каждую, в папке WebDAV</string>
+    <string name="credits">Pierre Gallaz · разработано с Claude Code</string>
     <string name="account_hint">Папка WebDAV держит заметки в одном состоянии на всех устройствах. kDrive: сервер https://ID.connect.kdrive.infomaniak.com (ID — число в веб-адресе kDrive), ваш логин Infomaniak и пароль приложения при двухфакторной аутентификации. Nextcloud и любой WebDAV-сервер работают так же.</string>
     <string name="server">сервер</string>
     <string name="username">имя пользователя</string>

@@ -1,0 +1,11 @@
+Des notes en texte brut, noir et blanc, texte seulement, pensées pour les téléphones e-ink et pour qui veut des mots sans décoration. Pas d'icônes, pas de couleurs : blanc sur noir ou noir sur blanc, serif, sans ou mono, trois tailles de texte. Fait partie de la famille Reader's (Reader's Launcher, Tasks, Calendar, Books…).
+
+Une liste, une page. Une note est un fichier texte ; sa première ligne est son titre. La liste montre le titre, la date de modification et la ligne suivante. Un tap pour écrire, un appui long pour partager ou supprimer. Le menu ⋯ cherche, synchronise, passe en blanc sur noir. Pas de mise en forme, pas de dossiers, pas de couleurs. Un texte partagé depuis une autre application devient une nouvelle note.
+
+Synchronisation : les notes vivent dans un dossier sur n'importe quel serveur WebDAV, un fichier .txt chacune, un ordinateur ou un autre téléphone voit donc des fichiers ordinaires. Infomaniak kDrive, Nextcloud et les autres serveurs prennent leur adresse habituelle ; le dossier (« Notes » par défaut) est créé s'il manque. La synchronisation tourne à l'ouverture, en quittant une note, et depuis le menu. Les etags décident qui a bougé : une note changée ici et intacte là-bas est envoyée ; changée là-bas et intacte ici est reçue ; changée des deux côtés garde le texte du serveur comme seconde note (« … (copie serveur) ») et envoie le vôtre. La ligne d'état sous la liste dit ce qui s'est passé, ou ce qui a échoué. Sans serveur, les notes restent simplement sur le téléphone.
+
+Deux widgets standard pour n'importe quel lanceur : la dernière note (une ligne, + pour en écrire une) et les dernières notes en liste. Reader's Launcher montre la même chose sur sa tuile notes.
+
+Pas de compte ailleurs que sur votre propre serveur, pas de pistage. Anglais, français, allemand, espagnol, portugais, russe. Logiciel libre, licence MIT.
+
+Pierre Gallaz · développé avec Claude Code

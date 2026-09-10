@@ -24,6 +24,7 @@
     <string name="on">sim</string>
     <string name="off">não</string>
     <string name="about">notas em texto simples, um ficheiro cada, numa pasta WebDAV</string>
+    <string name="credits">Pierre Gallaz · desenvolvido com Claude Code</string>
     <string name="account_hint">Uma pasta WebDAV mantém as notas em dia nos seus outros aparelhos. kDrive: servidor https://ID.connect.kdrive.infomaniak.com (o ID é o número no endereço web do kDrive), o seu utilizador Infomaniak e uma palavra-passe de aplicação se tiver a verificação em dois passos. O Nextcloud e qualquer servidor WebDAV funcionam da mesma forma.</string>
     <string name="server">servidor</string>
     <string name="username">utilizador</string>
