@@ -30,4 +30,9 @@
     <string name="password">пароль</string>
     <string name="folder">папка на сервере</string>
     <string name="sync_on_open">синхронизировать при открытии</string>
+    <string name="widget_line_name">Reader\'s Notes · последняя заметка</string>
+    <string name="widget_list_name">Reader\'s Notes · последние заметки</string>
+    <string name="widget_line_desc">последняя заметка, + для новой</string>
+    <string name="widget_list_desc">последние заметки, + для новой</string>
+    <string name="empty_short">заметок нет</string>
 </resources>

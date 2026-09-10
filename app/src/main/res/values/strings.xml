@@ -31,4 +31,9 @@
     <string name="password">password</string>
     <string name="folder">folder on the server</string>
     <string name="sync_on_open">sync when the app opens</string>
+    <string name="widget_line_name">Reader\'s Notes · latest note</string>
+    <string name="widget_list_name">Reader\'s Notes · latest notes</string>
+    <string name="widget_line_desc">the latest note, + for a new one</string>
+    <string name="widget_list_desc">the latest notes, + for a new one</string>
+    <string name="empty_short">no note yet</string>
 </resources>

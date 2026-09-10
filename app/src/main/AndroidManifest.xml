@@ -37,6 +37,15 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+        <receiver android:name=".widget.LineWidget" android:exported="true" android:label="@string/widget_line_name">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_line_info" />
+        </receiver>
+        <receiver android:name=".widget.ListWidget" android:exported="true" android:label="@string/widget_list_name">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_list_info" />
+        </receiver>
+        <service android:name=".widget.ListService" android:permission="android.permission.BIND_REMOTEVIEWS" android:exported="false" />
         <provider
             android:name=".provider.NotesProvider"
             android:authorities="com.freedomfighter.readersnotes"

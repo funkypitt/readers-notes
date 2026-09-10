@@ -30,4 +30,9 @@
     <string name="password">palavra-passe</string>
     <string name="folder">pasta no servidor</string>
     <string name="sync_on_open">sincronizar ao abrir</string>
+    <string name="widget_line_name">Reader\'s Notes · última nota</string>
+    <string name="widget_list_name">Reader\'s Notes · últimas notas</string>
+    <string name="widget_line_desc">a última nota, + para escrever uma</string>
+    <string name="widget_list_desc">as últimas notas, + para escrever uma</string>
+    <string name="empty_short">nenhuma nota</string>
 </resources>

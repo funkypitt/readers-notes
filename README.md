@@ -27,6 +27,11 @@ changed it since. The status line under the list says what happened, or what wen
 
 Shared text from another app becomes a new note.
 
+## Widgets
+
+Two standard home-screen widgets for any launcher, black and white: the latest note (one line,
++ for a new one) and the latest notes as a list. Tap a note to open it.
+
 ## Install
 
 From the [F-Droid repo](https://funkypitt.github.io/fdroid-repo/) or the APK attached to a
