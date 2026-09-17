@@ -36,4 +36,11 @@
     <string name="widget_line_desc">последняя заметка, + для новой</string>
     <string name="widget_list_desc">последние заметки, + для новой</string>
     <string name="empty_short">заметок нет</string>
+    <string name="export_credentials">экспортировать учётные данные</string>
+    <string name="export_credentials_hint">файл для настройки другого устройства или настольного приложения — в нём пароль</string>
+    <string name="import_credentials">импортировать учётные данные</string>
+    <string name="credentials_imported">учётные данные импортированы</string>
+    <string name="credentials_imported_from">сервер и логин взяты из %1$s</string>
+    <string name="credentials_not_a_file">это не файл учётных данных Reader\'s</string>
+    <string name="credentials_nothing">в этом файле нет ничего для %1$s</string>
 </resources>

@@ -24,7 +24,7 @@ class App : Application() {
     val status = MutableStateFlow("")
     val syncing = MutableStateFlow(false)
 
-    override fun onCreate() { super.onCreate(); prefs; store }
+    override fun onCreate() { super.onCreate(); prefs; store; com.freedomfighter.readersnotes.data.CredentialsShare.cleanUp(this) }
 
     fun sync() {
         val s = prefs.settings.value

@@ -39,6 +39,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.freedomfighter.readersnotes.App
 import com.freedomfighter.readersnotes.R
+import com.freedomfighter.readersnotes.data.Credentials
+import com.freedomfighter.readersnotes.data.CredentialsShare
 import com.freedomfighter.readersnotes.data.FontChoice
 import com.freedomfighter.readersnotes.data.NotesStore
 import com.freedomfighter.readersnotes.data.TextSize
@@ -204,6 +206,25 @@ fun SettingsScreen(nav: Nav, app: App) {
     val colors = LocalColors.current
     val status by app.status.collectAsState()
     var prompt by remember { mutableStateOf<String?>(null) }   // server | folder | username | password
+    val context = LocalContext.current
+    var credMessage by remember { mutableStateOf("") }
+    val notCredentials = stringResource(R.string.credentials_not_a_file)
+    val nothingForUs = stringResource(R.string.credentials_nothing, stringResource(R.string.app_name))
+    val imported = stringResource(R.string.credentials_imported)
+    val importedFrom = stringResource(R.string.credentials_imported_from, "Reader's Recorder")
+    val pick = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        credMessage = try {
+            val got = Credentials.read(CredentialsShare.readText(context, uri))
+            val a = got.account; val cur = app.prefs.settings.value
+            // the same as typing the account by hand, then a sync
+            app.prefs.setAccount(a.server ?: cur.server, a.folder ?: cur.folder, a.username ?: cur.username, a.password ?: cur.password)
+            app.sync()
+            if (got.fromFallback) importedFrom else imported
+        } catch (e: Credentials.NotCredentials) { notCredentials
+        } catch (e: Credentials.NothingForUs) { nothingForUs
+        } catch (e: Exception) { e.message ?: notCredentials }
+    }
     BackHandler { nav.pop() }
     Page {
         Column(Modifier.fillMaxSize()) {
@@ -216,6 +237,14 @@ fun SettingsScreen(nav: Nav, app: App) {
                 TextRow(s.folder, secondary = stringResource(R.string.folder)) { prompt = "folder" }
                 TextRow(if (s.syncOnOpen) stringResource(R.string.on) else stringResource(R.string.off), secondary = stringResource(R.string.sync_on_open)) { app.prefs.setSyncOnOpen(!s.syncOnOpen) }
                 if (s.configured) TextRow(stringResource(R.string.sync_now), secondary = status.ifBlank { null }) { app.sync() }
+                val shareTitle = stringResource(R.string.export_credentials)
+                if (s.configured) TextRow(shareTitle, secondary = stringResource(R.string.export_credentials_hint)) {
+                    CredentialsShare.share(context, Credentials.build(s.server, s.folder, s.username, s.password), shareTitle)
+                }
+                TextRow(stringResource(R.string.import_credentials), secondary = credMessage.ifBlank { null }) {
+                    credMessage = ""
+                    pick.launch(arrayOf("application/json", "text/plain", "application/octet-stream", "*/*"))
+                }
                 Rule(Modifier.padding(vertical = 8.dp))
                 TextRow(if (colors.isDark) stringResource(R.string.theme_dark) else stringResource(R.string.theme_light), secondary = stringResource(R.string.colours)) { app.prefs.toggleTheme(colors.isDark) }
                 TextRow(when (s.textSize) { TextSize.SMALL -> "S"; TextSize.MEDIUM -> "M"; TextSize.LARGE -> "L" }, secondary = stringResource(R.string.text_size)) {

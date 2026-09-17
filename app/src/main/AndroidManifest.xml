@@ -51,5 +51,13 @@
             android:authorities="com.freedomfighter.readersnotes"
             android:exported="true"
             android:permission="com.freedomfighter.readersnotes.permission.ACCESS" />
+        <!-- The credentials file handed to the share menu. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.credentials"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/credentials_paths" />
+        </provider>
     </application>
 </manifest>
