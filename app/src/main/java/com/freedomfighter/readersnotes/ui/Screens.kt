@@ -43,6 +43,8 @@ import com.freedomfighter.readersnotes.data.Credentials
 import com.freedomfighter.readersnotes.data.CredentialsShare
 import com.freedomfighter.readersnotes.data.FontChoice
 import com.freedomfighter.readersnotes.data.NotesStore
+import com.freedomfighter.readersnotes.data.findLinks
+import com.freedomfighter.readersnotes.data.openLink
 import com.freedomfighter.readersnotes.data.TextSize
 import com.freedomfighter.readersnotes.data.ThemeMode
 import java.time.Instant
@@ -132,12 +134,35 @@ fun NotesScreen(nav: Nav, app: App) {
             MenuItem(stringResource(R.string.settings)) { nav.push(Screen.Settings) }
         ))
         noteMenu?.let { id ->
-            TextMenu(app.store.title(id).ifBlank { stringResource(R.string.untitled) }, listOf(
-                MenuItem(stringResource(R.string.share)) { share(context, app.store.text(id)) },
-                MenuItem(stringResource(R.string.delete)) { app.store.delete(id); app.sync() }
-            ), onDismiss = { noteMenu = null })
+            TextMenu(app.store.title(id).ifBlank { stringResource(R.string.untitled) }, buildList {
+                addAll(linkItems(context, app.store.text(id)))
+                add(MenuItem(stringResource(R.string.share)) { share(context, app.store.text(id)) })
+                add(MenuItem(stringResource(R.string.delete)) { app.store.delete(id); app.sync() })
+            }, onDismiss = { noteMenu = null })
         }
         if (asking) TextPrompt(stringResource(R.string.find), initial = query, confirm = stringResource(R.string.find), onDone = { query = it; asking = false }, onCancel = { asking = false })
+    }
+}
+
+/**
+ * One menu line per thing the note holds that can be acted on: "call …", "write to …", "open …".
+ * Nothing is added when the note holds none.
+ */
+@Composable
+fun linkItems(context: android.content.Context, text: String): List<MenuItem> {
+    val call = stringResource(R.string.link_call)
+    val write = stringResource(R.string.link_write)
+    val open = stringResource(R.string.link_open)
+    val noApp = stringResource(R.string.no_app_for_this)
+    return findLinks(text).map { link ->
+        val verb = when {
+            link.uri.startsWith("tel:") -> call
+            link.uri.startsWith("mailto:") -> write
+            else -> open
+        }
+        MenuItem("$verb ${link.text}") {
+            if (!openLink(context, link.uri)) android.widget.Toast.makeText(context, noApp, android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 }
 
@@ -187,10 +212,13 @@ fun EditScreen(nav: Nav, app: App, id: String) {
             }
             Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
         }
-        if (menu) TextMenu(null, listOf(
-            MenuItem(stringResource(R.string.share)) { share(context, value.text) },
-            MenuItem(stringResource(R.string.delete)) { app.store.delete(id); nav.pop(); app.sync() }
-        ), onDismiss = { menu = false }, footer = listOf(
+        if (menu) TextMenu(null, buildList {
+            // a number, a mail or a web address written in the note: opened from here, because the
+            // note itself is a text field where a tap places the cursor
+            addAll(linkItems(context, value.text))
+            add(MenuItem(stringResource(R.string.share)) { share(context, value.text) })
+            add(MenuItem(stringResource(R.string.delete)) { app.store.delete(id); nav.pop(); app.sync() })
+        }, onDismiss = { menu = false }, footer = listOf(
             MenuItem(if (colors.isDark) stringResource(R.string.theme_light) else stringResource(R.string.theme_dark)) { app.prefs.toggleTheme(colors.isDark) }
         ))
     }

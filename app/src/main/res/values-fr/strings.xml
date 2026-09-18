@@ -43,4 +43,8 @@
     <string name="credentials_imported_from">serveur et identifiants repris de %1$s</string>
     <string name="credentials_not_a_file">ce n\'est pas un fichier d\'identifiants Reader\'s</string>
     <string name="credentials_nothing">ce fichier ne contient rien pour %1$s</string>
+    <string name="link_call">appeler</string>
+    <string name="link_write">écrire à</string>
+    <string name="link_open">ouvrir</string>
+    <string name="no_app_for_this">aucune app pour cela sur le téléphone</string>
 </resources>

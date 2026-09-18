@@ -27,6 +27,11 @@ changed it since. The status line under the list says what happened, or what wen
 
 Shared text from another app becomes a new note.
 
+A note often holds a phone number, a mail address or a link. The ⋯ menu of a note (and its long
+press in the list) offers them: "call …", "write to …", "open …" — the dialer opens with the
+number ready, never calling by itself. Dates, prices and room numbers are left alone. The note
+itself stays a plain text field, where a tap places the cursor and a long press selects and copies.
+
 ## Widgets
 
 Two standard home-screen widgets for any launcher, black and white: the latest note (one line,
