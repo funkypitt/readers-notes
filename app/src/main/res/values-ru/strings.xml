@@ -47,4 +47,24 @@
     <string name="link_write">написать</string>
     <string name="link_open">открыть</string>
     <string name="no_app_for_this">на телефоне нет приложения для этого</string>
+    <string name="dictate">диктовать</string>
+    <string name="dictating">идёт диктовка</string>
+    <string name="dictation">диктовка</string>
+    <string name="transcribing_plain">сказанное записывается</string>
+    <string name="dictation_hint">Диктовка: сказанное записывается на этом телефоне, ничего никуда не отправляется. Модель скачивается один раз и используется совместно с Reader\'s Recorder и Audio Player, если они установлены.</string>
+    <string name="dictate_no_mic">микрофон не открывается</string>
+    <string name="dictate_no_model">модель не читается</string>
+    <string name="dictate_no_speech">ничего не услышано</string>
+    <string name="dictate_refused">для диктовки нужен микрофон</string>
+    <string name="stop">стоп</string>
+    <string name="language">язык речи</string>
+    <string name="language_auto">определяется</string>
+    <string name="model_not_yet">нужно скачать</string>
+    <string name="phase_model">загрузка модели · %1$d%%</string>
+    <string name="phase_transcribe">расшифровка · %1$d%%</string>
+    <string name="recommended">рекомендуется</string>
+    <string name="quality_high_hint">вчетверо медленнее</string>
+    <string name="quality_normal">обычная</string>
+    <string name="quality_high">тщательная</string>
+    <string name="speak_here">говорите. Нажмите ■, когда закончите; слова появятся чуть позже.</string>
 </resources>

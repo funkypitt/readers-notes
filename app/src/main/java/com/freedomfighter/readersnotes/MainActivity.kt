@@ -35,7 +35,8 @@ class MainActivity : ComponentActivity() {
                 Bars()
                 when (val s = nav.current) {
                     Screen.Notes -> NotesScreen(nav, app)
-                    is Screen.Edit -> EditScreen(nav, app, s.id)
+                    // keyed: the launcher can ask for another note while one is open
+                    is Screen.Edit -> androidx.compose.runtime.key(s.id) { EditScreen(nav, app, s.id) }
                     Screen.Settings -> SettingsScreen(nav, app)
                 }
             }
@@ -48,6 +49,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         val app = application as App
         if (app.prefs.settings.value.syncOnOpen) app.sync()
+        DictateService.kick(this)   // a dictation whose words were never written, taken up again
     }
 
     override fun onPause() {
@@ -56,7 +58,7 @@ class MainActivity : ComponentActivity() {
         if (app.store.all().any { it.dirty || it.deleted }) app.sync()
     }
 
-    /** Shared text becomes a new note; our own provider URI (the launcher's tile) opens that note. */
+    /** Shared text becomes a new note; our own provider URI (the launcher's tile) opens that note, a new one, or a new one with the microphone open. */
     private fun handle(intent: Intent?) {
         val data = intent?.data
         if (intent?.action == Intent.ACTION_VIEW && data?.authority == "com.freedomfighter.readersnotes") {
@@ -64,6 +66,7 @@ class MainActivity : ComponentActivity() {
             val id = data.lastPathSegment
             nav.home()
             if (id == "new") nav.push(Screen.Edit(app.store.create()))
+            else if (id == "dictate") nav.wantDictate = true
             else if (id != null && app.store.get(id) != null) nav.push(Screen.Edit(id))
             intent.action = null; return
         }

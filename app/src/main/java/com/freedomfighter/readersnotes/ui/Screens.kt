@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,22 +28,27 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.freedomfighter.readers.speech.whisper.Models
 import com.freedomfighter.readersnotes.App
+import com.freedomfighter.readersnotes.DictateService
 import com.freedomfighter.readersnotes.R
 import com.freedomfighter.readersnotes.data.Credentials
 import com.freedomfighter.readersnotes.data.CredentialsShare
 import com.freedomfighter.readersnotes.data.FontChoice
 import com.freedomfighter.readersnotes.data.NotesStore
+import com.freedomfighter.readersnotes.data.Prefs
 import com.freedomfighter.readersnotes.data.findLinks
 import com.freedomfighter.readersnotes.data.openLink
 import com.freedomfighter.readersnotes.data.TextSize
@@ -65,6 +71,8 @@ class Nav {
     fun pop() { if (stack.size > 1) stack.removeAt(stack.size - 1) }
     fun home() { while (stack.size > 1) stack.removeAt(stack.size - 1) }
     var version by mutableIntStateOf(0)
+    /** Asked from outside (the launcher): a new note, the microphone open. */
+    var wantDictate by mutableStateOf(false)
 }
 
 fun whenLabel(millis: Long): String {
@@ -97,6 +105,9 @@ fun NotesScreen(nav: Nav, app: App) {
         app.store.live().filter { query.isBlank() || app.store.text(it.id).contains(query, ignoreCase = true) }
     }
     fun newNote() { nav.push(Screen.Edit(app.store.create())) }
+    val live = DictateService.Live
+    val dictateNew = rememberDictate { app.store.create().also { nav.push(Screen.Edit(it)) } }
+    LaunchedEffect(nav.wantDictate) { if (nav.wantDictate) { nav.wantDictate = false; if (!live.recording) dictateNew() } }
     Page {
         Column(Modifier.fillMaxSize()) {
             ScreenTitle(
@@ -110,7 +121,7 @@ fun NotesScreen(nav: Nav, app: App) {
                 }
                 items(notes, key = { it.id }) { n ->
                     val title = app.store.title(n.id).ifBlank { stringResource(R.string.untitled) }
-                    val preview = app.store.preview(n.id)
+                    val preview = dictationStatus(n.id) ?: app.store.preview(n.id)
                     Column(Modifier.fillMaxWidth().pressable(onClick = { nav.push(Screen.Edit(n.id)) }, onLongPress = { noteMenu = n.id })
                         .padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
                         T(title, size = typo.title, maxLines = 1)
@@ -119,7 +130,12 @@ fun NotesScreen(nav: Nav, app: App) {
                 }
             }
             Rule()
-            TextRow(stringResource(R.string.new_note), size = typo.title) { newNote() }
+            // The two ways into a note, one tap each: write it, or say it.
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+                Box(Modifier.weight(1f)) { TextRow(stringResource(R.string.new_note), size = typo.title) { newNote() } }
+                Box(Modifier.weight(1f)) { DictateRow { app.store.create().also { nav.push(Screen.Edit(it)) } } }
+            }
+            if (live.message.isNotEmpty()) Small(live.message, Modifier.padding(horizontal = rowPadH).padding(bottom = 6.dp), maxLines = 2)
             if (status.isNotEmpty() || !settings.configured) {
                 Small(if (settings.configured) status else stringResource(R.string.not_synced), Modifier.padding(horizontal = rowPadH).padding(bottom = 10.dp).noRippleClickable { if (settings.configured) app.sync() else nav.push(Screen.Settings) }, maxLines = 1)
             }
@@ -181,17 +197,37 @@ fun EditScreen(nav: Nav, app: App, id: String) {
     val typo = LocalTypo.current
     val colors = LocalColors.current
     val settings by app.prefs.settings.collectAsState()
-    var value by remember { mutableStateOf(TextFieldValue(app.store.text(id))) }
+    // the cursor starts at the end: what is dictated into a note just opened goes after what it holds
+    var value by remember { mutableStateOf(app.store.text(id).let { TextFieldValue(it, TextRange(it.length)) }) }
     var menu by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
     val empty = value.text.isEmpty()
     BackHandler { nav.pop() }
-    LaunchedEffect(Unit) { if (empty) focus.requestFocus() }
+    val live = DictateService.Live
+    // opened by « dictate »: the keyboard stays down, the page is for what is being said
+    LaunchedEffect(Unit) { if (empty && !(live.recording && live.noteId == id)) focus.requestFocus() }
     LaunchedEffect(value.text) { app.store.save(id, value.text) }
+    // What was dictated arrives at the cursor, a space or nothing before it as the text around asks.
+    LaunchedEffect(live.arrived) {
+        val a = live.arrived ?: return@LaunchedEffect
+        if (a.noteId != id) return@LaunchedEffect
+        live.arrived = null
+        val before = value.text.substring(0, value.selection.min)
+        val after = value.text.substring(value.selection.max)
+        val lead = if (before.isEmpty() || before.last().isWhitespace()) "" else " "
+        val trail = if (after.isEmpty() || after.first().isWhitespace()) "" else " "
+        val inserted = before + lead + a.text + trail
+        value = TextFieldValue(inserted + after, TextRange(inserted.length))
+    }
     DisposableEffect(Unit) {
+        live.editing = id
         onDispose {
-            // an empty note is not worth keeping; a written one goes to the server
-            if (app.store.text(id).isBlank()) app.store.delete(id) else if (settings.configured) app.sync()
+            live.editing = ""
+            // words that arrived as the page was closing still belong to the note
+            live.arrived?.takeIf { it.noteId == id }?.let { live.arrived = null; DictateService.append(app, id, it.text) }
+            // an empty note is not worth keeping — unless its words are still on their way; a written one goes to the server
+            if (app.store.text(id).isBlank()) { if (!DictateService.pendingFor(context, id)) app.store.delete(id) }
+            else if (settings.configured) app.sync()
         }
     }
     val title = NotesStore.titleOf(value.text)
@@ -206,10 +242,12 @@ fun EditScreen(nav: Nav, app: App, id: String) {
                     textStyle = TextStyle(color = colors.fg, fontFamily = typo.family, fontWeight = typo.weight, fontSize = typo.title, lineHeight = typo.title * 1.45f),
                     cursorBrush = SolidColor(colors.fg),
                     decorationBox = { inner ->
-                        Box { if (empty) T(stringResource(R.string.write_here), size = typo.title, color = colors.dim, align = TextAlign.Start); inner() }
+                        Box { if (empty) T(stringResource(if (live.recording && live.noteId == id) R.string.speak_here else R.string.write_here), size = typo.title, color = colors.dim, align = TextAlign.Start); inner() }
                     }
                 )
             }
+            Rule()
+            DictateRow(secondary = dictationStatus(id) ?: live.message.ifEmpty { null }) { id }
             Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
         }
         if (menu) TextMenu(null, buildList {
@@ -272,6 +310,24 @@ fun SettingsScreen(nav: Nav, app: App) {
                 TextRow(stringResource(R.string.import_credentials), secondary = credMessage.ifBlank { null }) {
                     credMessage = ""
                     pick.launch(arrayOf("application/json", "text/plain", "application/octet-stream", "*/*"))
+                }
+                Rule(Modifier.padding(vertical = 8.dp))
+                // Dictation. Two rows rather than one that switches, so the advice stands beside its
+                // option: a note is a few sentences, the careful model costs seconds and halves the
+                // mistakes (measured 2026-09-18: 10 to 11 % of words wrong against 4 to 5 %).
+                Small(stringResource(R.string.dictation_hint), Modifier.padding(horizontal = rowPadH).padding(top = 8.dp, bottom = 4.dp), maxLines = 4)
+                val chosen = Models.byKey(s.dictationModel)
+                val downloading by Models.downloading.collectAsState()
+                listOf(Models.HIGH, Models.NORMAL).forEach { m ->
+                    val state = when { Models.isDownloaded(context, m) -> ""; downloading >= 0 && m == chosen -> " · " + stringResource(R.string.phase_model, downloading); else -> " · " + stringResource(R.string.model_not_yet) }
+                    val note = if (m == Models.HIGH) " · " + stringResource(R.string.recommended) + " · " + stringResource(R.string.quality_high_hint) else ""
+                    TextRow(stringResource(if (m == Models.HIGH) R.string.quality_high else R.string.quality_normal), inverted = m == chosen,
+                        secondary = m.mb.toString() + " MB" + note + state) { app.prefs.setDictationModel(m.key) }
+                }
+                TextRow(if (s.dictationLanguage.isBlank()) stringResource(R.string.language_auto) else java.util.Locale(s.dictationLanguage).getDisplayLanguage(java.util.Locale.getDefault()).lowercase(),
+                    secondary = stringResource(R.string.language)) {
+                    val all = Prefs.languages()
+                    app.prefs.setDictationLanguage(all[(all.indexOf(s.dictationLanguage).coerceAtLeast(0) + 1) % all.size])
                 }
                 Rule(Modifier.padding(vertical = 8.dp))
                 TextRow(if (colors.isDark) stringResource(R.string.theme_dark) else stringResource(R.string.theme_light), secondary = stringResource(R.string.colours)) { app.prefs.toggleTheme(colors.isDark) }

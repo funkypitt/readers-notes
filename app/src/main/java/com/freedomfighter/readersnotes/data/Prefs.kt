@@ -21,7 +21,10 @@ data class Settings(
     val folder: String = "Notes",
     val username: String = "",
     val password: String = "",
-    val syncOnOpen: Boolean = true
+    val syncOnOpen: Boolean = true,
+    /** Dictation: the whisper model ("high" = careful, "normal") and the language spoken ("" = detected). */
+    val dictationModel: String = "high",
+    val dictationLanguage: String = Prefs.deviceLanguage()
 ) {
     val configured: Boolean get() = server.isNotBlank()
     /** The folder URL, always ending with "/". */
@@ -47,7 +50,9 @@ class Prefs(context: Context) {
         folder = sp.getString("folder", "Notes") ?: "Notes",
         username = sp.getString("username", "") ?: "",
         password = sp.getString("password", "") ?: "",
-        syncOnOpen = sp.getBoolean("sync_on_open", true)
+        syncOnOpen = sp.getBoolean("sync_on_open", true),
+        dictationModel = sp.getString("dictation_model", "high") ?: "high",
+        dictationLanguage = sp.getString("dictation_language", deviceLanguage()) ?: deviceLanguage()
     )
     private inline fun <reified E : Enum<E>> enumOr(name: String?, default: E): E =
         name?.let { runCatching { enumValueOf<E>(it) }.getOrNull() } ?: default
@@ -60,8 +65,16 @@ class Prefs(context: Context) {
     fun setAccount(server: String, folder: String, username: String, password: String) =
         sp.edit().putString("server", server.trim()).putString("folder", folder.trim().ifBlank { "Notes" }).putString("username", username.trim()).putString("password", password).apply()
     fun setSyncOnOpen(v: Boolean) = sp.edit().putBoolean("sync_on_open", v).apply()
+    fun setDictationModel(v: String) = sp.edit().putString("dictation_model", v).apply()
+    fun setDictationLanguage(v: String) = sp.edit().putString("dictation_language", v).apply()
     fun toggleTheme(systemIsDark: Boolean) {
         val dark = when (_settings.value.theme) { ThemeMode.DARK -> true; ThemeMode.LIGHT -> false; ThemeMode.SYSTEM -> systemIsDark }
         setTheme(if (dark) ThemeMode.LIGHT else ThemeMode.DARK)
+    }
+
+    companion object {
+        fun deviceLanguage(): String = java.util.Locale.getDefault().language.takeIf { it.isNotBlank() } ?: "en"
+        /** What the language row offers: the phone's language, English, detected. */
+        fun languages(): List<String> = listOf(deviceLanguage(), "en", "").distinct()
     }
 }

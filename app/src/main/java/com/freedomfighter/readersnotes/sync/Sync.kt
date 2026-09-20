@@ -33,6 +33,8 @@ object Sync {
                 continue
             }
             val text = store.text(note.id)
+            // nothing in it yet (a dictation still being written): not worth an "untitled.txt" on the server
+            if (text.isBlank() && note.remoteName == null) continue
             if (note.dirty) {
                 var name = NotesStore.fileNameOf(text)
                 if (name != note.remoteName) {

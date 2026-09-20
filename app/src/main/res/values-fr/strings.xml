@@ -47,4 +47,24 @@
     <string name="link_write">écrire à</string>
     <string name="link_open">ouvrir</string>
     <string name="no_app_for_this">aucune app pour cela sur le téléphone</string>
+    <string name="dictate">dicter</string>
+    <string name="dictating">dictée en cours</string>
+    <string name="dictation">dictée</string>
+    <string name="transcribing_plain">mise par écrit de la dictée</string>
+    <string name="dictation_hint">Dictée : ce que vous dites est mis par écrit sur ce téléphone, rien n\'est envoyé nulle part. Le modèle est téléchargé une seule fois, et partagé avec Reader\'s Recorder et Audio Player s\'ils sont là.</string>
+    <string name="dictate_no_mic">le micro ne s\'ouvre pas</string>
+    <string name="dictate_no_model">le modèle est illisible</string>
+    <string name="dictate_no_speech">rien n\'a été entendu</string>
+    <string name="dictate_refused">la dictée a besoin du micro</string>
+    <string name="stop">arrêter</string>
+    <string name="language">langue parlée</string>
+    <string name="language_auto">détectée</string>
+    <string name="model_not_yet">à récupérer</string>
+    <string name="phase_model">téléchargement du modèle · %1$d%%</string>
+    <string name="phase_transcribe">transcription · %1$d%%</string>
+    <string name="recommended">recommandé</string>
+    <string name="quality_high_hint">4 fois plus lente</string>
+    <string name="quality_normal">ordinaire</string>
+    <string name="quality_high">soignée</string>
+    <string name="speak_here">parlez. Un toucher sur ■ quand vous avez fini ; les mots arrivent un instant après.</string>
 </resources>

@@ -12,6 +12,23 @@ One list, one page. A note is a text file; its first line is its title. The list
 title, when it changed and the next line. Tap to write, long-press to share or delete. The
 ⋯ menu finds, syncs, flips white on black. No formatting, no folders, no colours.
 
+## Dictation
+
+At the bottom of the list, two ways into a note, one tap each: **+ new note** to write it,
+**● dictate** to say it. The same row sits under every open note. While you speak the row
+shows the running time, a tap on ■ ends it, and the words arrive a moment later where the
+cursor is (or at the end of the note if you have left it). The microphone stays open with the
+screen off.
+
+The words are written on the phone by [whisper.cpp](https://github.com/ggerganov/whisper.cpp)
+— nothing is sent anywhere. The model is fetched once (the careful one, 574 MB, by default;
+an ordinary one of 190 MB, four times faster, is in the settings) and shared with Reader's
+Recorder, Audio Player and Podcasts when one of them already holds it. The sound itself is
+only a means: it is deleted as soon as its text is in the note.
+
+`content://com.freedomfighter.readersnotes/notes/dictate` (VIEW) opens a new note with the
+microphone open, for a launcher.
+
 ## Sync
 
 Notes live in a folder on any WebDAV server, one `.txt` file each, so a desktop or another
@@ -42,7 +59,7 @@ Two standard home-screen widgets for any launcher, black and white: the latest n
 ## Install
 
 From the [F-Droid repo](https://funkypitt.github.io/fdroid-repo/) or the APK attached to a
-release. Build with `./gradlew assembleDebug` (JDK 17+, Android SDK 35).
+release. Clone with `--recursive` (the speech code is the git submodule `speech/`, [readers-speech](https://github.com/funkypitt/readers-speech)); build with `./gradlew assembleDebug` (JDK 17+, Android SDK 35, NDK 27.1, CMake 3.22.1).
 
 ## Crédits / Credits
 

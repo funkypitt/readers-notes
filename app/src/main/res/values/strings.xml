@@ -48,4 +48,24 @@
     <string name="link_write">write to</string>
     <string name="link_open">open</string>
     <string name="no_app_for_this">no app for this on the phone</string>
+    <string name="dictate">dictate</string>
+    <string name="dictating">dictating</string>
+    <string name="dictation">dictation</string>
+    <string name="transcribing_plain">writing what was said</string>
+    <string name="dictation_hint">Dictation: what you say is written on this phone, nothing is sent anywhere. The model is fetched once, and shared with Reader\'s Recorder and Audio Player when they are here.</string>
+    <string name="dictate_no_mic">the microphone cannot be opened</string>
+    <string name="dictate_no_model">the model cannot be read</string>
+    <string name="dictate_no_speech">nothing was heard</string>
+    <string name="dictate_refused">dictating needs the microphone</string>
+    <string name="stop">stop</string>
+    <string name="language">language spoken</string>
+    <string name="language_auto">detected</string>
+    <string name="model_not_yet">to fetch</string>
+    <string name="phase_model">fetching the model · %1$d%%</string>
+    <string name="phase_transcribe">transcribing · %1$d%%</string>
+    <string name="recommended">recommended</string>
+    <string name="quality_high_hint">four times slower</string>
+    <string name="quality_normal">ordinary</string>
+    <string name="quality_high">careful</string>
+    <string name="speak_here">speak. A tap on ■ when you have finished; the words come a moment later.</string>
 </resources>
