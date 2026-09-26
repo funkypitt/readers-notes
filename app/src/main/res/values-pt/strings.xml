@@ -67,4 +67,15 @@
     <string name="quality_normal">corrente</string>
     <string name="quality_high">cuidada</string>
     <string name="speak_here">fale. Um toque em ■ quando terminar; as palavras chegam um momento depois.</string>
+    <string name="all_notes">todas as notas</string>
+    <string name="new_folder">nova pasta</string>
+    <string name="new_folder_name">nome da nova pasta</string>
+    <string name="move_to_folder">mover para uma pasta</string>
+    <string name="no_folder">sem pasta</string>
+    <string name="rename">mudar o nome</string>
+    <string name="delete_folder">eliminar a pasta</string>
+    <string name="delete_folder_q">eliminar a pasta « %1$s »? As notas ficam, em todas as notas.</string>
+    <string name="delete_folder_keep">eliminar a pasta, manter as notas</string>
+    <string name="folders_setting">pastas</string>
+    <string name="folders_hint">Notas arrumadas em pastas: a primeira página lista-as, « todas as notas » primeiro. No servidor, cada pasta é uma subpasta da pasta das notas. Desligado: uma só lista, como antes.</string>
 </resources>

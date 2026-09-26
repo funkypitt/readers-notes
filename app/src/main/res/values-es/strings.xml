@@ -67,4 +67,15 @@
     <string name="quality_normal">corriente</string>
     <string name="quality_high">cuidada</string>
     <string name="speak_here">hable. Un toque en ■ cuando haya terminado; las palabras llegan un momento después.</string>
+    <string name="all_notes">todas las notas</string>
+    <string name="new_folder">nueva carpeta</string>
+    <string name="new_folder_name">nombre de la nueva carpeta</string>
+    <string name="move_to_folder">mover a una carpeta</string>
+    <string name="no_folder">sin carpeta</string>
+    <string name="rename">cambiar el nombre</string>
+    <string name="delete_folder">eliminar la carpeta</string>
+    <string name="delete_folder_q">¿eliminar la carpeta « %1$s »? Sus notas se quedan, en todas las notas.</string>
+    <string name="delete_folder_keep">eliminar la carpeta, conservar las notas</string>
+    <string name="folders_setting">carpetas</string>
+    <string name="folders_hint">Notas ordenadas en carpetas: la primera página las lista, « todas las notas » primero. En el servidor, cada carpeta es una subcarpeta de la carpeta de notas. Desactivado: una sola lista, como antes.</string>
 </resources>

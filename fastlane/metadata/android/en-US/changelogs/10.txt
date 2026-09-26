@@ -1,0 +1,1 @@
+Folders, optional (settings): the first page lists them, « all notes » first; each is a subfolder of the notes folder on the server. Off: one list, as before.

@@ -239,7 +239,10 @@ fun TextPrompt(
     onCancel: () -> Unit
 ) {
     val colors = LocalColors.current
-    var value by remember { mutableStateOf(initial) }
+    val typo = LocalTypo.current
+    // A pre-filled value opens selected: the first key replaces it (the Reader's rule for prompts).
+    var field by remember { mutableStateOf(androidx.compose.ui.text.input.TextFieldValue(initial, androidx.compose.ui.text.TextRange(0, initial.length))) }
+    val value = field.text
     val focus = remember { FocusRequester() }
     BackHandler(onBack = onCancel)
     LaunchedEffect(Unit) { focus.requestFocus() }
@@ -262,13 +265,16 @@ fun TextPrompt(
         ) {
             Rule(color = colors.fg)
             Small(title, Modifier.padding(horizontal = rowPadH).padding(top = 14.dp))
-            ReaderTextField(
-                value = value,
-                onValueChange = { value = it },
+            BasicTextField(
+                value = field,
+                onValueChange = { field = it },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = rowPadH, vertical = 10.dp).focusRequester(focus),
-                imeAction = ImeAction.Done,
-                onImeAction = { if (value.isNotBlank()) onDone(value.trim()) },
-                password = password
+                singleLine = true,
+                textStyle = TextStyle(color = colors.fg, fontFamily = typo.family, fontWeight = typo.weight, fontSize = typo.tile),
+                cursorBrush = SolidColor(colors.fg),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = if (password) androidx.compose.ui.text.input.KeyboardType.Password else androidx.compose.ui.text.input.KeyboardType.Text),
+                visualTransformation = if (password) androidx.compose.ui.text.input.PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+                keyboardActions = KeyboardActions(onAny = { if (value.isNotBlank()) onDone(value.trim()) })
             )
             Rule()
             Row(Modifier.fillMaxWidth()) {

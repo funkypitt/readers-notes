@@ -68,4 +68,15 @@
     <string name="quality_normal">ordinary</string>
     <string name="quality_high">careful</string>
     <string name="speak_here">speak. A tap on ■ when you have finished; the words come a moment later.</string>
+    <string name="all_notes">all notes</string>
+    <string name="new_folder">new folder</string>
+    <string name="new_folder_name">name of the new folder</string>
+    <string name="move_to_folder">move to a folder</string>
+    <string name="no_folder">no folder</string>
+    <string name="rename">rename</string>
+    <string name="delete_folder">delete the folder</string>
+    <string name="delete_folder_q">delete the folder « %1$s »? Its notes stay, in all notes.</string>
+    <string name="delete_folder_keep">delete the folder, keep the notes</string>
+    <string name="folders_setting">folders</string>
+    <string name="folders_hint">Notes filed in folders: the first page lists them, « all notes » first. On the server each folder is a subfolder of the notes folder. Off: one list, as before.</string>
 </resources>

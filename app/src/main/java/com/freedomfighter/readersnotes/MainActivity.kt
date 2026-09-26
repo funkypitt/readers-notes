@@ -34,7 +34,8 @@ class MainActivity : ComponentActivity() {
             ReaderTheme(settings) {
                 Bars()
                 when (val s = nav.current) {
-                    Screen.Notes -> NotesScreen(nav, app)
+                    Screen.Notes -> if (settings.useFolders) com.freedomfighter.readersnotes.ui.FoldersScreen(nav, app) else NotesScreen(nav, app)
+                    is Screen.Folder -> androidx.compose.runtime.key(s.name, s.query) { NotesScreen(nav, app, s.name, inFolders = true, initialQuery = s.query) }
                     // keyed: the launcher can ask for another note while one is open
                     is Screen.Edit -> androidx.compose.runtime.key(s.id) { EditScreen(nav, app, s.id) }
                     Screen.Settings -> SettingsScreen(nav, app)

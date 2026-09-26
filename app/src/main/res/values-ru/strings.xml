@@ -67,4 +67,15 @@
     <string name="quality_normal">обычная</string>
     <string name="quality_high">тщательная</string>
     <string name="speak_here">говорите. Нажмите ■, когда закончите; слова появятся чуть позже.</string>
+    <string name="all_notes">все заметки</string>
+    <string name="new_folder">новая папка</string>
+    <string name="new_folder_name">название новой папки</string>
+    <string name="move_to_folder">переместить в папку</string>
+    <string name="no_folder">без папки</string>
+    <string name="rename">переименовать</string>
+    <string name="delete_folder">удалить папку</string>
+    <string name="delete_folder_q">удалить папку « %1$s »? Заметки останутся во «всех заметках».</string>
+    <string name="delete_folder_keep">удалить папку, сохранить заметки</string>
+    <string name="folders_setting">папки</string>
+    <string name="folders_hint">Заметки по папкам: первая страница показывает их, сначала «все заметки». На сервере каждая папка — подпапка папки заметок. Выкл.: один список, как раньше.</string>
 </resources>

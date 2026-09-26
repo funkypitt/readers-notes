@@ -24,7 +24,9 @@ data class Settings(
     val syncOnOpen: Boolean = true,
     /** Dictation: the whisper model ("high" = careful, "normal") and the language spoken ("" = detected). */
     val dictationModel: String = "high",
-    val dictationLanguage: String = Prefs.deviceLanguage()
+    val dictationLanguage: String = Prefs.deviceLanguage(),
+    /** Notes filed in folders (off: one list, as before). */
+    val useFolders: Boolean = false
 ) {
     val configured: Boolean get() = server.isNotBlank()
     /** The folder URL, always ending with "/". */
@@ -51,6 +53,7 @@ class Prefs(context: Context) {
         username = sp.getString("username", "") ?: "",
         password = sp.getString("password", "") ?: "",
         syncOnOpen = sp.getBoolean("sync_on_open", true),
+        useFolders = sp.getBoolean("folders", false),
         dictationModel = sp.getString("dictation_model", "high") ?: "high",
         dictationLanguage = sp.getString("dictation_language", deviceLanguage()) ?: deviceLanguage()
     )
@@ -65,6 +68,7 @@ class Prefs(context: Context) {
     fun setAccount(server: String, folder: String, username: String, password: String) =
         sp.edit().putString("server", server.trim()).putString("folder", folder.trim().ifBlank { "Notes" }).putString("username", username.trim()).putString("password", password).apply()
     fun setSyncOnOpen(v: Boolean) = sp.edit().putBoolean("sync_on_open", v).apply()
+    fun setUseFolders(v: Boolean) = sp.edit().putBoolean("folders", v).apply()
     fun setDictationModel(v: String) = sp.edit().putString("dictation_model", v).apply()
     fun setDictationLanguage(v: String) = sp.edit().putString("dictation_language", v).apply()
     fun toggleTheme(systemIsDark: Boolean) {

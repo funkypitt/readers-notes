@@ -67,4 +67,15 @@
     <string name="quality_normal">gewöhnlich</string>
     <string name="quality_high">sorgfältig</string>
     <string name="speak_here">Sprechen Sie. Tippen Sie auf ■, wenn Sie fertig sind; die Worte kommen einen Augenblick später.</string>
+    <string name="all_notes">alle notizen</string>
+    <string name="new_folder">neuer ordner</string>
+    <string name="new_folder_name">name des neuen ordners</string>
+    <string name="move_to_folder">in einen ordner verschieben</string>
+    <string name="no_folder">kein ordner</string>
+    <string name="rename">umbenennen</string>
+    <string name="delete_folder">ordner löschen</string>
+    <string name="delete_folder_q">den ordner « %1$s » löschen? Seine notizen bleiben, in alle notizen.</string>
+    <string name="delete_folder_keep">ordner löschen, notizen behalten</string>
+    <string name="folders_setting">ordner</string>
+    <string name="folders_hint">Notizen in ordnern: die erste seite listet sie auf, « alle notizen » zuerst. Auf dem server ist jeder ordner ein unterordner des notizordners. Aus: eine liste, wie bisher.</string>
 </resources>

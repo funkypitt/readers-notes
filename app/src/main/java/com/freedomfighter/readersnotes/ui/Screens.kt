@@ -2,6 +2,7 @@ package com.freedomfighter.readersnotes.ui
 
 import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -60,6 +61,8 @@ import java.time.format.DateTimeFormatter
 
 sealed class Screen {
     data object Notes : Screen()
+    /** Folders on: one folder's notes ([name] "" = none), or every note ([name] null). */
+    data class Folder(val name: String?, val query: String = "") : Screen()
     data class Edit(val id: String) : Screen()
     data object Settings : Screen()
 }
@@ -90,7 +93,7 @@ fun whenLabel(millis: Long): String {
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-fun NotesScreen(nav: Nav, app: App) {
+fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean = false, initialQuery: String = "") {
     val context = LocalContext.current
     val typo = LocalTypo.current
     val colors = LocalColors.current
@@ -99,20 +102,24 @@ fun NotesScreen(nav: Nav, app: App) {
     val status by app.status.collectAsState()
     var menu by remember { mutableStateOf(false) }
     var noteMenu by remember { mutableStateOf<String?>(null) }
-    var query by remember { mutableStateOf("") }
+    var query by remember { mutableStateOf(initialQuery) }
     var asking by remember { mutableStateOf(false) }
-    val notes = remember(all, query, nav.version) {
-        app.store.live().filter { query.isBlank() || app.store.text(it.id).contains(query, ignoreCase = true) }
+    val notes = remember(all, query, nav.version, folder) {
+        app.store.live().filter { (folder == null || it.folder == folder) && (query.isBlank() || app.store.text(it.id).contains(query, ignoreCase = true)) }
     }
-    fun newNote() { nav.push(Screen.Edit(app.store.create())) }
+    val here = folder ?: ""
+    fun newNote() { nav.push(Screen.Edit(app.store.create(folder = here))) }
+    var moving by remember { mutableStateOf<String?>(null) }
+    if (inFolders) BackHandler { if (query.isNotBlank() && initialQuery.isBlank()) query = "" else nav.pop() }
     val live = DictateService.Live
-    val dictateNew = rememberDictate { app.store.create().also { nav.push(Screen.Edit(it)) } }
+    val dictateNew = rememberDictate { app.store.create(folder = here).also { nav.push(Screen.Edit(it)) } }
     LaunchedEffect(nav.wantDictate) { if (nav.wantDictate) { nav.wantDictate = false; if (!live.recording) dictateNew() } }
     Page {
         Column(Modifier.fillMaxSize()) {
+            val place = when { !inFolders -> stringResource(R.string.app_title); folder == null -> stringResource(R.string.all_notes); else -> folder }
             ScreenTitle(
-                if (query.isBlank()) stringResource(R.string.app_title) else "“$query”",
-                onBack = if (query.isBlank()) null else ({ query = "" }),
+                if (query.isBlank()) place else "“$query”",
+                onBack = if (inFolders) ({ if (query.isNotBlank() && initialQuery.isBlank()) query = "" else nav.pop() }) else if (query.isBlank()) null else ({ query = "" }),
                 trailing = "⋯", onTrailing = { menu = true }
             )
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(top = 6.dp, bottom = 16.dp)) {
@@ -125,7 +132,8 @@ fun NotesScreen(nav: Nav, app: App) {
                     Column(Modifier.fillMaxWidth().pressable(onClick = { nav.push(Screen.Edit(n.id)) }, onLongPress = { noteMenu = n.id })
                         .padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
                         T(title, size = typo.title, maxLines = 1)
-                        Small(whenLabel(n.modified) + (if (preview.isNotEmpty()) " · $preview" else "") + (if (n.dirty && settings.configured) " · ✎" else ""), maxLines = 1)
+                        val where = if (inFolders && folder == null && n.folder.isNotEmpty()) " · ${n.folder}" else ""
+                        Small(whenLabel(n.modified) + where + (if (preview.isNotEmpty()) " · $preview" else "") + (if (n.dirty && settings.configured) " · ✎" else ""), maxLines = 1)
                     }
                 }
             }
@@ -133,7 +141,7 @@ fun NotesScreen(nav: Nav, app: App) {
             // The two ways into a note, one tap each: write it, or say it.
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                 Box(Modifier.weight(1f)) { TextRow(stringResource(R.string.new_note), size = typo.title) { newNote() } }
-                Box(Modifier.weight(1f)) { DictateRow { app.store.create().also { nav.push(Screen.Edit(it)) } } }
+                Box(Modifier.weight(1f)) { DictateRow { app.store.create(folder = here).also { nav.push(Screen.Edit(it)) } } }
             }
             if (live.message.isNotEmpty()) Small(live.message, Modifier.padding(horizontal = rowPadH).padding(bottom = 6.dp), maxLines = 2)
             if (status.isNotEmpty() || !settings.configured) {
@@ -153,10 +161,121 @@ fun NotesScreen(nav: Nav, app: App) {
             TextMenu(app.store.title(id).ifBlank { stringResource(R.string.untitled) }, buildList {
                 addAll(linkItems(context, app.store.text(id)))
                 add(MenuItem(stringResource(R.string.share)) { share(context, app.store.text(id)) })
+                if (settings.useFolders) add(MenuItem(stringResource(R.string.move_to_folder)) { moving = id })
                 add(MenuItem(stringResource(R.string.delete)) { app.store.delete(id); app.sync() })
             }, onDismiss = { noteMenu = null })
         }
+        moving?.let { id -> MoveMenu(app, id) { moving = null } }
         if (asking) TextPrompt(stringResource(R.string.find), initial = query, confirm = stringResource(R.string.find), onDone = { query = it; asking = false }, onCancel = { asking = false })
+    }
+}
+
+/** "Move to": no folder, or one of the folders (the current one marked). */
+@Composable
+fun MoveMenu(app: App, id: String, onDismiss: () -> Unit) {
+    val current = app.store.get(id)?.folder ?: ""
+    TextMenu(stringResource(R.string.move_to_folder),
+        listOf(MenuItem((if (current.isEmpty()) "● " else "○ ") + stringResource(R.string.no_folder)) { app.store.move(id, ""); app.sync() }) +
+            app.store.folders().map { f -> MenuItem((if (current == f.name) "● " else "○ ") + f.name) { app.store.move(id, f.name); app.sync() } },
+        onDismiss = onDismiss)
+}
+
+/** A folder drawn small, in the text's colour: tab on the top left. [filled] for "all notes". */
+@Composable
+fun FolderGlyph(filled: Boolean = false, dashed: Boolean = false) {
+    val colors = LocalColors.current
+    androidx.compose.foundation.Canvas(Modifier.size(width = 30.dp, height = 23.dp)) {
+        val stroke = 1.6.dp.toPx(); val r = 3.dp.toPx()
+        val tabW = size.width * 0.42f; val tab = size.height * 0.18f
+        val p = androidx.compose.ui.graphics.Path().apply {
+            moveTo(r, 0f); lineTo(tabW - tab * 0.4f, 0f); lineTo(tabW + tab * 0.6f, tab)
+            lineTo(size.width - r, tab); quadraticBezierTo(size.width, tab, size.width, tab + r)
+            lineTo(size.width, size.height - r); quadraticBezierTo(size.width, size.height, size.width - r, size.height)
+            lineTo(r, size.height); quadraticBezierTo(0f, size.height, 0f, size.height - r)
+            lineTo(0f, r); quadraticBezierTo(0f, 0f, r, 0f); close()
+        }
+        val c = if (dashed) colors.dim else colors.fg
+        if (filled) drawPath(p, c)
+        else drawPath(p, c, style = androidx.compose.ui.graphics.drawscope.Stroke(width = stroke,
+            pathEffect = if (dashed) androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(6f, 5f)) else null))
+    }
+}
+
+/** Folders on: the first page is the list of folders, "all notes" first, as in Reader's Scanner. */
+@Composable
+fun FoldersScreen(nav: Nav, app: App) {
+    val typo = LocalTypo.current
+    val colors = LocalColors.current
+    val settings by app.prefs.settings.collectAsState()
+    val all by app.store.notes.collectAsState()
+    val folders by app.store.folderList.collectAsState()
+    val status by app.status.collectAsState()
+    var menu by remember { mutableStateOf(false) }
+    var folderMenu by remember { mutableStateOf<String?>(null) }
+    var creating by remember { mutableStateOf(false) }
+    var renaming by remember { mutableStateOf<String?>(null) }
+    var deleting by remember { mutableStateOf<String?>(null) }
+    var asking by remember { mutableStateOf(false) }
+    val sorted = remember(folders) { folders.sortedBy { it.name.lowercase() } }
+    val live = DictateService.Live
+    val dictateNew = rememberDictate { app.store.create().also { nav.push(Screen.Edit(it)) } }
+    LaunchedEffect(nav.wantDictate) { if (nav.wantDictate) { nav.wantDictate = false; if (!live.recording) dictateNew() } }
+    Page {
+        Column(Modifier.fillMaxSize()) {
+            ScreenTitle(stringResource(R.string.app_title), onBack = null, trailing = "⋯", onTrailing = { menu = true })
+            LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(top = 6.dp, bottom = 16.dp)) {
+                item(key = "all") { FolderRow(stringResource(R.string.all_notes), all.count { !it.deleted }, filled = true) { nav.push(Screen.Folder(null)) } }
+                items(sorted, key = { "f:" + it.name }) { f ->
+                    FolderRow(f.name, all.count { !it.deleted && it.folder == f.name }, onLongPress = { folderMenu = f.name }) { nav.push(Screen.Folder(f.name)) }
+                }
+                item(key = "+") { FolderRow(stringResource(R.string.new_folder), null, dashed = true) { creating = true } }
+            }
+            Rule()
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+                Box(Modifier.weight(1f)) { TextRow(stringResource(R.string.new_note), size = typo.title) { nav.push(Screen.Edit(app.store.create())) } }
+                Box(Modifier.weight(1f)) { DictateRow { app.store.create().also { nav.push(Screen.Edit(it)) } } }
+            }
+            if (live.message.isNotEmpty()) Small(live.message, Modifier.padding(horizontal = rowPadH).padding(bottom = 6.dp), maxLines = 2)
+            if (status.isNotEmpty() || !settings.configured) {
+                Small(if (settings.configured) status else stringResource(R.string.not_synced), Modifier.padding(horizontal = rowPadH).padding(bottom = 10.dp).noRippleClickable { if (settings.configured) app.sync() else nav.push(Screen.Settings) }, maxLines = 1)
+            }
+            Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
+        }
+        if (menu) TextMenu(null, buildList {
+            add(MenuItem(stringResource(R.string.new_note)) { nav.push(Screen.Edit(app.store.create())) })
+            add(MenuItem(stringResource(R.string.new_folder)) { creating = true })
+            add(MenuItem(stringResource(R.string.find)) { asking = true })
+            if (settings.configured) add(MenuItem(stringResource(R.string.sync_now)) { app.sync() })
+        }, onDismiss = { menu = false }, footer = listOf(
+            MenuItem(if (colors.isDark) stringResource(R.string.theme_light) else stringResource(R.string.theme_dark)) { app.prefs.toggleTheme(colors.isDark) },
+            MenuItem(stringResource(R.string.settings)) { nav.push(Screen.Settings) }
+        ))
+        folderMenu?.let { f ->
+            TextMenu(f, listOf(
+                MenuItem(stringResource(R.string.rename)) { renaming = f },
+                MenuItem(stringResource(R.string.delete_folder)) { deleting = f }
+            ), onDismiss = { folderMenu = null })
+        }
+        if (creating) TextPrompt(stringResource(R.string.new_folder_name), onDone = { if (app.store.addFolder(it) != null) app.sync(); creating = false }, onCancel = { creating = false })
+        renaming?.let { f -> TextPrompt(stringResource(R.string.rename), initial = f, onDone = { app.store.renameFolder(f, it); renaming = null; app.sync() }, onCancel = { renaming = null }) }
+        deleting?.let { f ->
+            TextMenu(stringResource(R.string.delete_folder_q, f), listOf(
+                MenuItem(stringResource(R.string.delete_folder_keep)) { app.store.deleteFolder(f); app.sync() },
+                MenuItem(stringResource(R.string.action_cancel)) { }
+            ), onDismiss = { deleting = null })
+        }
+        if (asking) TextPrompt(stringResource(R.string.find), confirm = stringResource(R.string.find), onDone = { asking = false; nav.push(Screen.Folder(null, it)) }, onCancel = { asking = false })
+    }
+}
+
+@Composable
+private fun FolderRow(name: String, count: Int?, filled: Boolean = false, dashed: Boolean = false, onLongPress: (() -> Unit)? = null, onClick: () -> Unit) {
+    val colors = LocalColors.current
+    Row(Modifier.fillMaxWidth().then(if (onLongPress != null) Modifier.pressable(onClick = onClick, onLongPress = onLongPress) else Modifier.noRippleClickable(onClick = onClick))
+        .padding(horizontal = rowPadH, vertical = rowPadV * 0.75f), verticalAlignment = Alignment.CenterVertically) {
+        FolderGlyph(filled, dashed)
+        T(name, Modifier.weight(1f).padding(start = 18.dp), size = LocalTypo.current.title, color = if (dashed) colors.dim else colors.fg, maxLines = 1)
+        if (count != null) Small(count.toString(), maxLines = 1)
     }
 }
 
@@ -302,6 +421,9 @@ fun SettingsScreen(nav: Nav, app: App) {
                 TextRow(if (s.password.isBlank()) stringResource(R.string.password) else "••••••••", secondary = stringResource(R.string.password)) { prompt = "password" }
                 TextRow(s.folder, secondary = stringResource(R.string.folder)) { prompt = "folder" }
                 TextRow(if (s.syncOnOpen) stringResource(R.string.on) else stringResource(R.string.off), secondary = stringResource(R.string.sync_on_open)) { app.prefs.setSyncOnOpen(!s.syncOnOpen) }
+                Rule(Modifier.padding(vertical = 8.dp))
+                TextRow(if (s.useFolders) stringResource(R.string.on) else stringResource(R.string.off), secondary = stringResource(R.string.folders_setting)) { app.prefs.setUseFolders(!s.useFolders) }
+                Small(stringResource(R.string.folders_hint), Modifier.padding(horizontal = rowPadH).padding(bottom = 8.dp), maxLines = 6)
                 if (s.configured) TextRow(stringResource(R.string.sync_now), secondary = status.ifBlank { null }) { app.sync() }
                 val shareTitle = stringResource(R.string.export_credentials)
                 if (s.configured) TextRow(shareTitle, secondary = stringResource(R.string.export_credentials_hint)) {

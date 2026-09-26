@@ -67,4 +67,15 @@
     <string name="quality_normal">ordinaire</string>
     <string name="quality_high">soignée</string>
     <string name="speak_here">parlez. Un toucher sur ■ quand vous avez fini ; les mots arrivent un instant après.</string>
+    <string name="all_notes">toutes les notes</string>
+    <string name="new_folder">nouveau dossier</string>
+    <string name="new_folder_name">nom du nouveau dossier</string>
+    <string name="move_to_folder">déplacer vers un dossier</string>
+    <string name="no_folder">aucun dossier</string>
+    <string name="rename">renommer</string>
+    <string name="delete_folder">supprimer le dossier</string>
+    <string name="delete_folder_q">supprimer le dossier « %1$s » ? Ses notes restent, dans toutes les notes.</string>
+    <string name="delete_folder_keep">supprimer le dossier, garder les notes</string>
+    <string name="folders_setting">dossiers</string>
+    <string name="folders_hint">Des notes rangées en dossiers : la première page les liste, « toutes les notes » d\'abord. Sur le serveur, chaque dossier est un sous-dossier du dossier des notes. Désactivé : une seule liste, comme avant.</string>
 </resources>

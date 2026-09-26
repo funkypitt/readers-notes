@@ -28,3 +28,27 @@ itself stays a plain text field, where a tap places the cursor and a long press 
 
 Two standard home-screen widgets for any launcher, black and white: the latest note (one line,
 + for a new one) and the latest notes as a list. Tap a note to open it.
+
+## Folders (1.6.0, optional)
+
+Setting "dossiers" (`Settings.useFolders`, pref `folders`, off by default). On: the first page is
+`FoldersScreen` — « all notes » (filled glyph, count), each folder (outline glyph, count), « new
+folder » (dashed) — as in Reader's Scanner but as a list; a folder opens `NotesScreen(folder)`,
+where new notes and dictations go; a note's menu has « move to a folder »; a folder's long press:
+rename, delete (its notes stay, in « all notes »).
+
+Store: `Note.folder` (here) and `Note.remoteFolder` (on the server); `Index.folders`
+(`NoteFolder(name, onServer)`) and `goneFolders` (deleted/renamed here, to remove there once
+empty). Sync (same algorithm as the desktop 1.3.0): a folder = a subfolder of the synced folder,
+one level deep; notes keyed "folder/name". Subfolders are synced when the setting is on OR
+anything was ever put in a folder (`usesFolders`), so turning the setting off never drops notes;
+otherwise exactly as before (the root only). A folder `onServer` and missing there = deleted there
+(unless a dirty note still needs it); one deleted/renamed here is DELETEd there once no file is
+left in it (someone else's files keep it, and it comes back). Folder names: `folderNameOf`, the
+file-name rule, 60 characters.
+
+Tested 2026-09-26 against wsgidav (emulator + headless desktop): off = subfolder ignored; on =
+subfolder pulled as a folder; new folder + note; move; rename; delete here; delete there; off
+after use keeps syncing; phone ↔ desktop see the same folders.
+
+Prompts now open a pre-filled value selected (the Reader's rule): `TextPrompt` keeps a TextFieldValue.
