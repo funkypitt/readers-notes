@@ -23,7 +23,7 @@ object NotesWidgets {
     fun sub(context: Context, n: Note): String {
         val store = (context.applicationContext as App).store
         val d = Instant.ofEpochMilli(n.modified).atZone(ZoneId.systemDefault()); val today = LocalDate.now()
-        val when_ = when (d.toLocalDate()) { today -> d.format(DateTimeFormatter.ofPattern("HH:mm")); today.minusDays(1) -> "yesterday"; else -> d.format(DateTimeFormatter.ofPattern("d MMM")).lowercase() }
+        val when_ = when (d.toLocalDate()) { today -> d.format(DateTimeFormatter.ofPattern("HH:mm")); today.minusDays(1) -> context.getString(R.string.yesterday); else -> d.format(DateTimeFormatter.ofPattern("d MMM")).lowercase() }
         val preview = store.preview(n.id)
         return if (preview.isEmpty()) when_ else "$when_ · $preview"
     }

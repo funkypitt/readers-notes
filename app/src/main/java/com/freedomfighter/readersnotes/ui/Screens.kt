@@ -78,12 +78,12 @@ class Nav {
     var wantDictate by mutableStateOf(false)
 }
 
-fun whenLabel(millis: Long): String {
+fun whenLabel(millis: Long, yesterday: String): String {
     val d = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
     val today = LocalDate.now()
     return when (d.toLocalDate()) {
         today -> d.format(DateTimeFormatter.ofPattern("HH:mm"))
-        today.minusDays(1) -> "yesterday"
+        today.minusDays(1) -> yesterday
         else -> d.format(DateTimeFormatter.ofPattern(if (d.year == today.year) "d MMM" else "d MMM yyyy")).lowercase()
     }
 }
@@ -133,7 +133,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
                         .padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
                         T(title, size = typo.title, maxLines = 1)
                         val where = if (inFolders && folder == null && n.folder.isNotEmpty()) " · ${n.folder}" else ""
-                        Small(whenLabel(n.modified) + where + (if (preview.isNotEmpty()) " · $preview" else "") + (if (n.dirty && settings.configured) " · ✎" else ""), maxLines = 1)
+                        Small(whenLabel(n.modified, stringResource(R.string.yesterday)) + where + (if (preview.isNotEmpty()) " · $preview" else "") + (if (n.dirty && settings.configured) " · ✎" else ""), maxLines = 1)
                     }
                 }
             }
@@ -408,7 +408,7 @@ fun SettingsScreen(nav: Nav, app: App) {
             if (got.fromFallback) importedFrom else imported
         } catch (e: Credentials.NotCredentials) { notCredentials
         } catch (e: Credentials.NothingForUs) { nothingForUs
-        } catch (e: Exception) { e.message ?: notCredentials }
+        } catch (e: Exception) { e.message?.let { context.getString(R.string.credentials_unreadable, it) } ?: notCredentials }
     }
     BackHandler { nav.pop() }
     Page {
@@ -444,7 +444,7 @@ fun SettingsScreen(nav: Nav, app: App) {
                     val state = when { Models.isDownloaded(context, m) -> ""; downloading >= 0 && m == chosen -> " · " + stringResource(R.string.phase_model, downloading); else -> " · " + stringResource(R.string.model_not_yet) }
                     val note = if (m == Models.HIGH) " · " + stringResource(R.string.recommended) + " · " + stringResource(R.string.quality_high_hint) else ""
                     TextRow(stringResource(if (m == Models.HIGH) R.string.quality_high else R.string.quality_normal), inverted = m == chosen,
-                        secondary = m.mb.toString() + " MB" + note + state) { app.prefs.setDictationModel(m.key) }
+                        secondary = stringResource(R.string.size_mb, m.mb) + note + state) { app.prefs.setDictationModel(m.key) }
                 }
                 TextRow(if (s.dictationLanguage.isBlank()) stringResource(R.string.language_auto) else java.util.Locale(s.dictationLanguage).getDisplayLanguage(java.util.Locale.getDefault()).lowercase(),
                     secondary = stringResource(R.string.language)) {

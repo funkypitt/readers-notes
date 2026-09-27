@@ -51,7 +51,7 @@
     <string name="dictating">dictando</string>
     <string name="dictation">dictado</string>
     <string name="transcribing_plain">escribiendo lo dictado</string>
-    <string name="dictation_hint">Dictado: lo que dice se escribe en este teléfono, nada se envía a ninguna parte. El modelo se descarga una sola vez y se comparte con Reader\'s Recorder y Audio Player si están aquí.</string>
+    <string name="dictation_hint">Dictado: lo que dices se escribe en este teléfono, nada se envía a ninguna parte. El modelo se descarga una sola vez y se comparte con Reader\'s Recorder y Audio Player si están instalados.</string>
     <string name="dictate_no_mic">el micrófono no se abre</string>
     <string name="dictate_no_model">el modelo no se puede leer</string>
     <string name="dictate_no_speech">no se ha oído nada</string>
@@ -66,7 +66,7 @@
     <string name="quality_high_hint">4 veces más lenta</string>
     <string name="quality_normal">corriente</string>
     <string name="quality_high">cuidada</string>
-    <string name="speak_here">hable. Un toque en ■ cuando haya terminado; las palabras llegan un momento después.</string>
+    <string name="speak_here">habla. Toca ■ cuando termines; las palabras aparecen un momento después.</string>
     <string name="all_notes">todas las notas</string>
     <string name="new_folder">nueva carpeta</string>
     <string name="new_folder_name">nombre de la nueva carpeta</string>
@@ -74,8 +74,20 @@
     <string name="no_folder">sin carpeta</string>
     <string name="rename">cambiar el nombre</string>
     <string name="delete_folder">eliminar la carpeta</string>
-    <string name="delete_folder_q">¿eliminar la carpeta « %1$s »? Sus notas se quedan, en todas las notas.</string>
+    <string name="delete_folder_q">¿eliminar la carpeta « %1$s »? Sus notas se quedan en « todas las notas ».</string>
     <string name="delete_folder_keep">eliminar la carpeta, conservar las notas</string>
     <string name="folders_setting">carpetas</string>
-    <string name="folders_hint">Notas ordenadas en carpetas: la primera página las lista, « todas las notas » primero. En el servidor, cada carpeta es una subcarpeta de la carpeta de notas. Desactivado: una sola lista, como antes.</string>
+    <string name="folders_hint">Notas ordenadas en carpetas: la primera página las lista, « todas las notas » primero. En el servidor, cada carpeta es una subcarpeta de la carpeta de notas. Desactivado: todas las notas en una sola lista.</string>
+    <string name="sync_syncing">sincronizando…</string>
+    <string name="sync_synced">sincronizado a las %1$s</string>
+    <string name="sync_failed">la sincronización falló</string>
+    <string name="sync_failed_detail">la sincronización falló: %1$s</string>
+    <string name="sync_wrong_login">usuario o contraseña incorrectos</string>
+    <string name="sync_method_unsupported">este teléfono no puede enviar %1$s al servidor</string>
+    <string name="server_copy">\u0020(copia del servidor)</string>
+    <string name="yesterday">ayer</string>
+    <string name="size_mb">%1$d MB</string>
+    <string name="dictate_stopped">detenido</string>
+    <string name="dictate_failed">aún no escrito: %1$s</string>
+    <string name="credentials_unreadable">no se puede leer el archivo: %1$s</string>
 </resources>

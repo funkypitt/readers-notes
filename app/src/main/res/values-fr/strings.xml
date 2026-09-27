@@ -51,7 +51,7 @@
     <string name="dictating">dictée en cours</string>
     <string name="dictation">dictée</string>
     <string name="transcribing_plain">mise par écrit de la dictée</string>
-    <string name="dictation_hint">Dictée : ce que vous dites est mis par écrit sur ce téléphone, rien n\'est envoyé nulle part. Le modèle est téléchargé une seule fois, et partagé avec Reader\'s Recorder et Audio Player s\'ils sont là.</string>
+    <string name="dictation_hint">Dictée : ce que vous dites est mis par écrit sur ce téléphone, rien n\'est envoyé nulle part. Le modèle est téléchargé une seule fois, et partagé avec Reader\'s Recorder et Audio Player s\'ils sont installés.</string>
     <string name="dictate_no_mic">le micro ne s\'ouvre pas</string>
     <string name="dictate_no_model">le modèle est illisible</string>
     <string name="dictate_no_speech">rien n\'a été entendu</string>
@@ -66,7 +66,7 @@
     <string name="quality_high_hint">4 fois plus lente</string>
     <string name="quality_normal">ordinaire</string>
     <string name="quality_high">soignée</string>
-    <string name="speak_here">parlez. Un toucher sur ■ quand vous avez fini ; les mots arrivent un instant après.</string>
+    <string name="speak_here">parlez. Touchez ■ quand vous avez fini ; les mots apparaissent un instant après.</string>
     <string name="all_notes">toutes les notes</string>
     <string name="new_folder">nouveau dossier</string>
     <string name="new_folder_name">nom du nouveau dossier</string>
@@ -74,8 +74,20 @@
     <string name="no_folder">aucun dossier</string>
     <string name="rename">renommer</string>
     <string name="delete_folder">supprimer le dossier</string>
-    <string name="delete_folder_q">supprimer le dossier « %1$s » ? Ses notes restent, dans toutes les notes.</string>
+    <string name="delete_folder_q">supprimer le dossier « %1$s » ? Ses notes restent dans « toutes les notes ».</string>
     <string name="delete_folder_keep">supprimer le dossier, garder les notes</string>
     <string name="folders_setting">dossiers</string>
-    <string name="folders_hint">Des notes rangées en dossiers : la première page les liste, « toutes les notes » d\'abord. Sur le serveur, chaque dossier est un sous-dossier du dossier des notes. Désactivé : une seule liste, comme avant.</string>
+    <string name="folders_hint">Des notes rangées en dossiers : la première page les liste, « toutes les notes » d\'abord. Sur le serveur, chaque dossier est un sous-dossier du dossier des notes. Désactivé : toutes les notes dans une seule liste.</string>
+    <string name="sync_syncing">synchronisation…</string>
+    <string name="sync_synced">synchronisé à %1$s</string>
+    <string name="sync_failed">échec de la synchronisation</string>
+    <string name="sync_failed_detail">échec de la synchronisation : %1$s</string>
+    <string name="sync_wrong_login">identifiant ou mot de passe incorrect</string>
+    <string name="sync_method_unsupported">ce téléphone ne peut pas envoyer %1$s au serveur</string>
+    <string name="server_copy">\u0020(copie du serveur)</string>
+    <string name="yesterday">hier</string>
+    <string name="size_mb">%1$d Mo</string>
+    <string name="dictate_stopped">arrêté</string>
+    <string name="dictate_failed">pas encore écrit : %1$s</string>
+    <string name="credentials_unreadable">le fichier est illisible : %1$s</string>
 </resources>

@@ -48,6 +48,9 @@ import java.io.EOFException
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
+/** A failure already worded for the reader, in their language. */
+private class Said(message: String) : Exception(message)
+
 /**
  * Dictation, on the model of Reader's Recorder's memo: a foreground service (type microphone)
  * keeps the microphone open with the screen off, and whisper.cpp writes what was said — on the
@@ -159,7 +162,7 @@ class DictateService : Service() {
                         withContext(Dispatchers.Default) { transcribe(f) }
                     } catch (e: Exception) {
                         // The sound stays: the next opening tries again (no network for the model, say).
-                        Live.message = (e.message ?: e.javaClass.simpleName).take(120)
+                        Live.message = (if (e is Said) e.message!! else getString(R.string.dictate_failed, e.message ?: e.javaClass.simpleName)).take(120)
                         break
                     }
                     f.delete()
@@ -185,7 +188,7 @@ class DictateService : Service() {
             Live.phase = "model"
             Models.download(this, model, onProgress = { Live.percent = it.coerceIn(0, 100) })
         }
-        val handle = Models.open(this, model) ?: error(getString(R.string.dictate_no_model))
+        val handle = Models.open(this, model) ?: throw Said(getString(R.string.dictate_no_model))
         val lang = s.dictationLanguage.ifBlank { null }
         Live.phase = "transcribe"; Live.percent = 0
         val segments = ArrayList<Segment>()
@@ -201,7 +204,7 @@ class DictateService : Service() {
                     val prompt = if (segments.isEmpty()) Prompts.style(lang) else Prompts.forPiece(lang, segments.takeLast(12).joinToString(" ") { it.text })
                     val segs = session.run(pcm, lang, prompt) { p ->
                         Live.percent = (((done + piece.size * p / 100.0) / total) * 100).toInt().coerceIn(0, 99)
-                    } ?: error("stopped")
+                    } ?: throw Said(getString(R.string.dictate_stopped))
                     segs.forEach { segments += it.copy(startMs = it.startMs + startMs, endMs = it.endMs + startMs) }
                     done += piece.size
                 }

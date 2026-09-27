@@ -52,7 +52,7 @@
     <string name="dictating">dictating</string>
     <string name="dictation">dictation</string>
     <string name="transcribing_plain">writing what was said</string>
-    <string name="dictation_hint">Dictation: what you say is written on this phone, nothing is sent anywhere. The model is fetched once, and shared with Reader\'s Recorder and Audio Player when they are here.</string>
+    <string name="dictation_hint">Dictation: what you say is written on this phone, nothing is sent anywhere. The model is fetched once, and shared with Reader\'s Recorder and Audio Player if they are installed.</string>
     <string name="dictate_no_mic">the microphone cannot be opened</string>
     <string name="dictate_no_model">the model cannot be read</string>
     <string name="dictate_no_speech">nothing was heard</string>
@@ -67,7 +67,7 @@
     <string name="quality_high_hint">four times slower</string>
     <string name="quality_normal">ordinary</string>
     <string name="quality_high">careful</string>
-    <string name="speak_here">speak. A tap on ■ when you have finished; the words come a moment later.</string>
+    <string name="speak_here">speak. Tap ■ when you have finished; the words appear a moment later.</string>
     <string name="all_notes">all notes</string>
     <string name="new_folder">new folder</string>
     <string name="new_folder_name">name of the new folder</string>
@@ -75,8 +75,20 @@
     <string name="no_folder">no folder</string>
     <string name="rename">rename</string>
     <string name="delete_folder">delete the folder</string>
-    <string name="delete_folder_q">delete the folder « %1$s »? Its notes stay, in all notes.</string>
+    <string name="delete_folder_q">delete the folder « %1$s »? Its notes stay in « all notes ».</string>
     <string name="delete_folder_keep">delete the folder, keep the notes</string>
     <string name="folders_setting">folders</string>
-    <string name="folders_hint">Notes filed in folders: the first page lists them, « all notes » first. On the server each folder is a subfolder of the notes folder. Off: one list, as before.</string>
+    <string name="folders_hint">Notes filed in folders: the first page lists them, « all notes » first. On the server each folder is a subfolder of the notes folder. Off: all notes in one list.</string>
+    <string name="sync_syncing">syncing…</string>
+    <string name="sync_synced">synced %1$s</string>
+    <string name="sync_failed">sync failed</string>
+    <string name="sync_failed_detail">sync failed: %1$s</string>
+    <string name="sync_wrong_login">wrong username or password</string>
+    <string name="sync_method_unsupported">this phone cannot send %1$s to the server</string>
+    <string name="server_copy">\u0020(server copy)</string>
+    <string name="yesterday">yesterday</string>
+    <string name="size_mb">%1$d MB</string>
+    <string name="dictate_stopped">stopped</string>
+    <string name="dictate_failed">not written yet: %1$s</string>
+    <string name="credentials_unreadable">the file cannot be read: %1$s</string>
 </resources>

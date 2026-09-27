@@ -32,13 +32,20 @@ class App : Application() {
         scope.launch {
             if (syncLock.isLocked) return@launch
             syncLock.withLock {
-                syncing.value = true; status.value = "syncing…"
+                syncing.value = true; status.value = getString(R.string.sync_syncing)
                 status.value = try {
-                    val r = Sync.run(store, s)
-                    "synced " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")) + listOf(r.uploaded to "↑", r.downloaded to "↓", r.deleted to "−").filter { it.first > 0 }.joinToString("") { " ${it.first}${it.second}" }
-                } catch (e: Exception) { e.message ?: "sync failed" }
+                    val r = Sync.run(store, s, getString(R.string.server_copy))
+                    getString(R.string.sync_synced, LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))) + listOf(r.uploaded to "↑", r.downloaded to "↓", r.deleted to "−").filter { it.first > 0 }.joinToString("") { " ${it.first}${it.second}" }
+                } catch (e: Exception) { syncError(e) }
                 syncing.value = false
             }
         }
+    }
+
+    /** The failure in the reader's language; the system's own words (English, often) only after it. */
+    private fun syncError(e: Exception): String = when (e) {
+        is com.freedomfighter.readersnotes.sync.WebDavAuthException -> getString(R.string.sync_wrong_login)
+        is com.freedomfighter.readersnotes.sync.WebDavMethodException -> getString(R.string.sync_method_unsupported, e.method)
+        else -> e.message?.let { getString(R.string.sync_failed_detail, it) } ?: getString(R.string.sync_failed)
     }
 }

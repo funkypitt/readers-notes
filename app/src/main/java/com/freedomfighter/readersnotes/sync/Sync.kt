@@ -26,7 +26,8 @@ object Sync {
     /** A note's place on the server: "name" in the synced folder, "folder/name" in a subfolder. */
     private fun key(folder: String, name: String) = if (folder.isEmpty()) name else "$folder/$name"
 
-    fun run(store: NotesStore, settings: Settings): Result {
+    /** [serverCopy] follows the title of the server's version of a note changed on both sides, " (server copy)" in the reader's language. */
+    fun run(store: NotesStore, settings: Settings, serverCopy: String): Result {
         val dav = WebDav(settings.username, settings.password)
         val root = settings.folderUrl
         if (!dav.exists(root)) dav.mkcol(root)
@@ -83,7 +84,7 @@ object Sync {
                     // both sides moved: keep theirs as a second note, ours takes the name
                     val theirs = dav.get(url(note.remoteFolder, note.remoteName!!))
                     if (theirs.trim() != text.trim()) {
-                        val copy = theirs.lines().let { l -> if (l.isEmpty()) theirs else (l.first() + " (server copy)") + "\n" + l.drop(1).joinToString("\n") }
+                        val copy = theirs.lines().let { l -> if (l.isEmpty()) theirs else (l.first() + serverCopy) + "\n" + l.drop(1).joinToString("\n") }
                         store.create(copy, note.remoteFolder); down++
                     }
                 }

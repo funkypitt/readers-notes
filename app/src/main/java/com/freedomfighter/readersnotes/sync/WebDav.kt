@@ -11,6 +11,10 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 class WebDavException(message: String) : IOException(message)
+/** The server refused the login (401); the UI says so in the reader's language. */
+class WebDavAuthException : IOException("wrong username or password")
+/** This phone's HTTP stack cannot send [method]; the UI says so in the reader's language. */
+class WebDavMethodException(val method: String) : IOException("cannot send $method on this device")
 
 data class RemoteFile(val name: String, val etag: String?, val modified: Long, val isDir: Boolean)
 
@@ -33,7 +37,7 @@ class WebDav(private val username: String, private val password: String) {
             if (body != null) c.outputStream.use { it.write(body) }
             val code = c.responseCode
             val text = (if (code in 200..299) c.inputStream else c.errorStream)?.readBytes()?.toString(Charsets.UTF_8) ?: ""
-            if (code == 401) throw WebDavException("wrong username or password")
+            if (code == 401) throw WebDavAuthException()
             if (code >= 400 && code !in allow) throw WebDavException("$method: HTTP $code")
             return Resp(code, text, c.headerFields)
         } finally { c.disconnect() }
@@ -46,7 +50,7 @@ class WebDav(private val username: String, private val password: String) {
         while (cls != null) {
             try { val f = cls.getDeclaredField("method"); f.isAccessible = true; f.set(target, method); return } catch (_: NoSuchFieldException) { cls = cls.superclass }
         }
-        throw WebDavException("cannot send $method on this device")
+        throw WebDavMethodException(method)
     }
 
     /** The files directly inside [folderUrl] (the folder itself excluded). */

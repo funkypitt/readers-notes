@@ -77,5 +77,17 @@
     <string name="delete_folder_q">удалить папку « %1$s »? Заметки останутся во «всех заметках».</string>
     <string name="delete_folder_keep">удалить папку, сохранить заметки</string>
     <string name="folders_setting">папки</string>
-    <string name="folders_hint">Заметки по папкам: первая страница показывает их, сначала «все заметки». На сервере каждая папка — подпапка папки заметок. Выкл.: один список, как раньше.</string>
+    <string name="folders_hint">Заметки по папкам: первая страница показывает их, сначала «все заметки». На сервере каждая папка — подпапка папки заметок. Выкл.: все заметки одним списком.</string>
+    <string name="sync_syncing">синхронизация…</string>
+    <string name="sync_synced">синхронизировано в %1$s</string>
+    <string name="sync_failed">синхронизация не удалась</string>
+    <string name="sync_failed_detail">синхронизация не удалась: %1$s</string>
+    <string name="sync_wrong_login">неверное имя пользователя или пароль</string>
+    <string name="sync_method_unsupported">этот телефон не может отправить %1$s на сервер</string>
+    <string name="server_copy">\u0020(копия с сервера)</string>
+    <string name="yesterday">вчера</string>
+    <string name="size_mb">%1$d МБ</string>
+    <string name="dictate_stopped">остановлено</string>
+    <string name="dictate_failed">пока не записано: %1$s</string>
+    <string name="credentials_unreadable">файл не читается: %1$s</string>
 </resources>
