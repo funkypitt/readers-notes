@@ -24,7 +24,11 @@ class App : Application() {
     val status = MutableStateFlow("")
     val syncing = MutableStateFlow(false)
 
-    override fun onCreate() { super.onCreate(); prefs; store; com.freedomfighter.readersnotes.data.CredentialsShare.cleanUp(this) }
+    override fun onCreate() {
+        super.onCreate(); prefs; store; com.freedomfighter.readersnotes.data.CredentialsShare.cleanUp(this)
+        // notes synced before the store remembered where: it was with the server and folder set at this start
+        prefs.settings.value.let { if (it.configured && store.place() == null) store.syncingWith(it.folderUrl) }
+    }
 
     fun sync() {
         val s = prefs.settings.value

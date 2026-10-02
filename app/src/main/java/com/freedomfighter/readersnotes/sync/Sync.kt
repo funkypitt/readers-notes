@@ -17,6 +17,11 @@ import com.freedomfighter.readersnotes.data.encodeSegment
  * folder's own files only. A note moved to another folder goes up under its new path and the
  * old file goes. A folder deleted there disappears here with its notes' files (deleted there);
  * one deleted or renamed here leaves the server once it is empty there.
+ *
+ * The store remembers which folder URL it was synced with. When the server or the folder is
+ * another one (typed in the settings, or brought by a credentials file), the notes here are
+ * treated as never synced: all are kept and uploaded, none is deleted (as the desktop does).
+ * One whose file is already there with the same text takes that file instead of a second one.
  */
 object Sync {
     class Result(val uploaded: Int, val downloaded: Int, val deleted: Int)
@@ -27,14 +32,15 @@ object Sync {
     private fun key(folder: String, name: String) = if (folder.isEmpty()) name else "$folder/$name"
 
     /** [serverCopy] follows the title of the server's version of a note changed on both sides, " (server copy)" in the reader's language. */
-    fun run(store: NotesStore, settings: Settings, serverCopy: String): Result {
-        val dav = WebDav(settings.username, settings.password)
+    fun run(store: NotesStore, settings: Settings, serverCopy: String, dav: Dav = WebDav(settings.username, settings.password)): Result {
         val root = settings.folderUrl
         if (!dav.exists(root)) dav.mkcol(root)
         fun dirUrl(folder: String) = if (folder.isEmpty()) root else root + encodeSegment(folder) + "/"
         fun url(folder: String, name: String) = dirUrl(folder) + encodeSegment(name)
 
         val entries = dav.list(root)
+        // another server or folder than last time (and it answers): nothing here is taken for deleted there
+        store.syncingWith(root)
         val remote = HashMap<String, RemoteFile>()
         entries.filter { !it.isDir && isNote(it.name) }.forEach { remote[it.name] = it }
         val withFolders = settings.useFolders || store.usesFolders()
@@ -73,6 +79,11 @@ object Sync {
                 val folder = if (withFolders) note.folder else ""
                 var name = NotesStore.fileNameOf(text)
                 var target = key(folder, name)
+                // never synced with this place, and the very same note is there already (a place left
+                // and come back to): it is that file, not a second one
+                if (here == null && target !in taken && remote[target] != null && dav.getOrNull(url(folder, name))?.trim() == text.trim()) {
+                    store.markSynced(note.id, name, remote[target]!!.etag, folder); taken += target; continue
+                }
                 if (target != here) {
                     // a fresh name must not collide with another server file
                     var i = 2; val base = name.removeSuffix(".txt")

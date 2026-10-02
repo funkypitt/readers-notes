@@ -235,6 +235,8 @@ fun TextPrompt(
     initial: String = "",
     confirm: String = stringResource(R.string.action_ok),
     password: Boolean = false,
+    /** An emptied field is an answer too (the server line: no server, the notes stay on the phone). */
+    allowEmpty: Boolean = false,
     onDone: (String) -> Unit,
     onCancel: () -> Unit
 ) {
@@ -274,13 +276,13 @@ fun TextPrompt(
                 cursorBrush = SolidColor(colors.fg),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = if (password) androidx.compose.ui.text.input.KeyboardType.Password else androidx.compose.ui.text.input.KeyboardType.Text),
                 visualTransformation = if (password) androidx.compose.ui.text.input.PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
-                keyboardActions = KeyboardActions(onAny = { if (value.isNotBlank()) onDone(value.trim()) })
+                keyboardActions = KeyboardActions(onAny = { if (allowEmpty || value.isNotBlank()) onDone(value.trim()) })
             )
             Rule()
             Row(Modifier.fillMaxWidth()) {
                 Box(Modifier.weight(1f)) { TextRow(stringResource(R.string.action_cancel), onClick = onCancel) }
                 Box(Modifier.weight(1f)) {
-                    TextRow(confirm, inverted = value.isNotBlank(), onClick = { if (value.isNotBlank()) onDone(value.trim()) })
+                    TextRow(confirm, inverted = allowEmpty || value.isNotBlank(), onClick = { if (allowEmpty || value.isNotBlank()) onDone(value.trim()) })
                 }
             }
             Rule(color = colors.fg)

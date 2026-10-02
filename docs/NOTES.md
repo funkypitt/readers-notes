@@ -17,6 +17,14 @@ here is downloaded; changed on both sides keeps the server's text as a second no
 ("… (server copy)") and uploads yours. Deleted here, deleted there, unless the other side
 changed it since. The status line under the list says what happened, or what went wrong.
 
+Another server or folder (typed in the settings, or brought by a credentials file): the store
+remembers the folder URL it was last synced with (`Index.place`), and `Sync.run`, once the new
+place has answered, calls `NotesStore.syncingWith`: every note is treated as never synced, kept
+and uploaded there, none is deleted (the desktop's `forget_server`). A note whose file is already
+there with the same text takes that file instead of a second one, so going back to a place does
+not double the notes. Emptying the server line turns the sync off ("on this phone only"); the
+notes stay. Tests: `SyncTest` (a server kept in memory behind the `Dav` interface).
+
 Shared text from another app becomes a new note.
 
 A note often holds a phone number, a mail address or a link. The ⋯ menu of a note (and its long

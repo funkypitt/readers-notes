@@ -18,8 +18,20 @@ class WebDavMethodException(val method: String) : IOException("cannot send $meth
 
 data class RemoteFile(val name: String, val etag: String?, val modified: Long, val isDir: Boolean)
 
+/** What the sync asks of a server. */
+interface Dav {
+    fun list(folderUrl: String): List<RemoteFile>
+    fun get(url: String): String
+    fun getOrNull(url: String): String?
+    fun put(url: String, text: String, ifMatch: String? = null): String?
+    fun etagOf(url: String): String?
+    fun delete(url: String)
+    fun mkcol(url: String)
+    fun exists(url: String): Boolean
+}
+
 /** The five WebDAV requests a notes folder needs: PROPFIND, GET, PUT, DELETE, MKCOL. */
-class WebDav(private val username: String, private val password: String) {
+class WebDav(private val username: String, private val password: String) : Dav {
     private val auth = "Basic " + Base64.encodeToString("$username:$password".toByteArray(), Base64.NO_WRAP)
 
     private class Resp(val code: Int, val body: String, val headers: Map<String, List<String>>)
@@ -54,7 +66,7 @@ class WebDav(private val username: String, private val password: String) {
     }
 
     /** The files directly inside [folderUrl] (the folder itself excluded). */
-    fun list(folderUrl: String): List<RemoteFile> {
+    override fun list(folderUrl: String): List<RemoteFile> {
         val r = request("PROPFIND", folderUrl, "<?xml version=\"1.0\"?><d:propfind xmlns:d=\"DAV:\"><d:prop><d:getetag/><d:getlastmodified/><d:resourcetype/></d:prop></d:propfind>".toByteArray(), depth = 1, contentType = "application/xml; charset=utf-8")
         val folderPath = URL(folderUrl).path.trimEnd('/')
         return parse(r.body).mapNotNull { e ->
@@ -66,25 +78,25 @@ class WebDav(private val username: String, private val password: String) {
         }
     }
 
-    fun get(url: String): String = request("GET", url).body
-    fun getOrNull(url: String): String? = request("GET", url, allow = setOf(404)).let { if (it.code == 404) null else it.body }
+    override fun get(url: String): String = request("GET", url).body
+    override fun getOrNull(url: String): String? = request("GET", url, allow = setOf(404)).let { if (it.code == 404) null else it.body }
 
     /** Returns the new etag when the server says it; null otherwise (ask again with [etagOf]). */
-    fun put(url: String, text: String, ifMatch: String? = null): String? {
+    override fun put(url: String, text: String, ifMatch: String?): String? {
         val h = HashMap<String, String>()
         if (ifMatch != null) h["If-Match"] = "\"$ifMatch\""
         val r = request("PUT", url, text.toByteArray(Charsets.UTF_8), headers = h)
         return r.headers.entries.firstOrNull { it.key.equals("ETag", ignoreCase = true) }?.value?.firstOrNull()?.trim()?.removeSurrounding("\"")
     }
 
-    fun etagOf(url: String): String? {
+    override fun etagOf(url: String): String? {
         val r = request("PROPFIND", url, "<?xml version=\"1.0\"?><d:propfind xmlns:d=\"DAV:\"><d:prop><d:getetag/></d:prop></d:propfind>".toByteArray(), depth = 0, contentType = "application/xml; charset=utf-8")
         return parse(r.body).firstOrNull()?.etag?.trim()?.removeSurrounding("\"")
     }
 
-    fun delete(url: String) { request("DELETE", url, allow = setOf(404)) }
-    fun mkcol(url: String) { request("MKCOL", url, allow = setOf(405, 301)) }
-    fun exists(url: String): Boolean = request("PROPFIND", url, depth = 0, allow = setOf(404)).code != 404
+    override fun delete(url: String) { request("DELETE", url, allow = setOf(404)) }
+    override fun mkcol(url: String) { request("MKCOL", url, allow = setOf(405, 301)) }
+    override fun exists(url: String): Boolean = request("PROPFIND", url, depth = 0, allow = setOf(404)).code != 404
 
     private class Entry { var href: String? = null; var etag: String? = null; var modified: String? = null; var isDir = false }
 

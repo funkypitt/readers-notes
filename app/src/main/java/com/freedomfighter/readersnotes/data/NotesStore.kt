@@ -37,12 +37,17 @@ private data class Index(
     val notes: List<Note> = emptyList(),
     val folders: List<NoteFolder> = emptyList(),
     /** Folders deleted or renamed here, to remove from the server once they are empty there. */
-    val goneFolders: List<String> = emptyList()
+    val goneFolders: List<String> = emptyList(),
+    /** The folder URL the notes were last synced with; null before any sync. */
+    val place: String? = null
 )
 
-class NotesStore(context: Context) {
-    private val dir = File(context.filesDir, "notes").apply { mkdirs() }
-    private val indexFile = File(context.filesDir, "notes.json")
+/** [changed] is called after every change of the index: the provider's observers and the widgets hear of it there. */
+class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
+    constructor(context: Context) : this(context.filesDir, notifier(context.applicationContext))
+
+    private val dir = File(filesDir, "notes").apply { mkdirs() }
+    private val indexFile = File(filesDir, "notes.json")
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
     private val lock = Any()
     private var index = loadIndex()
@@ -53,15 +58,12 @@ class NotesStore(context: Context) {
     val folderList: StateFlow<List<NoteFolder>> = _folders
 
     private fun loadIndex(): Index = runCatching { json.decodeFromString<Index>(indexFile.readText()) }.getOrDefault(Index())
-    private val changeUri = android.net.Uri.parse("content://com.freedomfighter.readersnotes/notes")
-    private val resolver = context.contentResolver
-    private val appContext = context.applicationContext
-    private fun saveIndex(all: List<Note>, folders: List<NoteFolder> = index.folders, gone: List<String> = index.goneFolders) {
-        index = Index(all, folders, gone)
+    private fun saveIndex(all: List<Note>, folders: List<NoteFolder> = index.folders, gone: List<String> = index.goneFolders, place: String? = index.place) {
+        index = Index(all, folders, gone, place)
         val tmp = File(indexFile.parentFile, "notes.json.tmp")
         tmp.writeText(json.encodeToString(index)); if (!tmp.renameTo(indexFile)) { indexFile.delete(); tmp.renameTo(indexFile) }
         _notes.value = all; _folders.value = folders
-        resolver.notifyChange(changeUri, null); runCatching { com.freedomfighter.readersnotes.widget.NotesWidgets.refresh(appContext) }
+        changed()
     }
 
     private fun file(id: String) = File(dir, "$id.txt")
@@ -145,6 +147,22 @@ class NotesStore(context: Context) {
     fun markSynced(id: String, remoteName: String, etag: String?, remoteFolder: String = "") = synchronized(lock) {
         saveIndex(all().map { if (it.id == id) it.copy(remoteName = remoteName, remoteFolder = remoteFolder, etag = etag, dirty = false) else it })
     }
+    /**
+     * The sync is about to run with [place] (the folder URL). Another server or folder than last
+     * time: what is remembered of the old one says nothing about this one, and a note missing there
+     * was not deleted there. So every note goes up again as new, and none is removed from here.
+     */
+    fun syncingWith(place: String) = synchronized(lock) {
+        if (index.place == place) return@synchronized
+        if (index.place != null) forgetServer()
+        saveIndex(all(), place = place)
+    }
+    fun place(): String? = synchronized(lock) { index.place }
+    private fun forgetServer() {
+        all().filter { it.deleted }.forEach { file(it.id).delete() }
+        saveIndex(all().filter { !it.deleted }.map { it.copy(remoteName = null, remoteFolder = "", etag = null, dirty = true) },
+            index.folders.map { it.copy(onServer = false) }, emptyList())
+    }
     /** A file from the server, new here or changed there. */
     fun applyRemote(id: String?, remoteName: String, etag: String?, text: String, modified: Long, folder: String = ""): String = synchronized(lock) {
         val nid = id ?: (System.currentTimeMillis().toString(36) + (1000..9999).random())
@@ -155,6 +173,11 @@ class NotesStore(context: Context) {
     }
 
     companion object {
+        private fun notifier(appContext: Context): () -> Unit {
+            val changeUri = android.net.Uri.parse("content://com.freedomfighter.readersnotes/notes")
+            val resolver = appContext.contentResolver
+            return { resolver.notifyChange(changeUri, null); runCatching { com.freedomfighter.readersnotes.widget.NotesWidgets.refresh(appContext) } }
+        }
         fun titleOf(text: String): String = text.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() }?.take(80) ?: ""
         /** A folder name the server and a desktop will both accept; null when nothing is left. */
         fun folderNameOf(name: String): String? =

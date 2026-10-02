@@ -469,9 +469,10 @@ fun SettingsScreen(nav: Nav, app: App) {
         prompt?.let { which ->
             val title = when (which) { "server" -> stringResource(R.string.server); "username" -> stringResource(R.string.username); "password" -> stringResource(R.string.password); else -> stringResource(R.string.folder) }
             val initial = when (which) { "server" -> s.server; "username" -> s.username; "password" -> s.password; else -> s.folder }
-            TextPrompt(title, initial = initial, password = which == "password", onDone = { v ->
+            // the server line can be emptied: no server, the notes stay on this phone only (and all of them stay)
+            TextPrompt(title, initial = initial, password = which == "password", allowEmpty = which == "server" && s.configured, onDone = { v ->
                 when (which) {
-                    "server" -> app.prefs.setAccount(v, s.folder, s.username, s.password)
+                    "server" -> { app.prefs.setAccount(v, s.folder, s.username, s.password); if (v.isBlank()) app.status.value = "" }
                     "username" -> app.prefs.setAccount(s.server, s.folder, v, s.password)
                     "password" -> app.prefs.setAccount(s.server, s.folder, s.username, v)
                     else -> app.prefs.setAccount(s.server, v, s.username, s.password)

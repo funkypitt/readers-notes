@@ -1,0 +1,1 @@
+Changing the server or the folder in the settings, or importing a credentials file made for another place, no longer removes notes from the phone: every note is kept and sent to the new place. Emptying the server line turns the sync off; the notes stay on the phone.
