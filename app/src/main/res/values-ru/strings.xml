@@ -35,6 +35,10 @@
     <string name="widget_list_name">Reader\'s Notes · последние заметки</string>
     <string name="widget_line_desc">последняя заметка, + для новой</string>
     <string name="widget_list_desc">последние заметки, + для новой</string>
+    <string name="widget_note_name">Reader\'s Notes · одна заметка</string>
+    <string name="widget_note_desc">одна заметка по вашему выбору, всегда на виду; нажмите, чтобы писать</string>
+    <string name="widget_note_pick">какую заметку показывать</string>
+    <string name="widget_note_gone">эта заметка удалена</string>
     <string name="empty_short">заметок нет</string>
     <string name="export_credentials">экспортировать учётные данные</string>
     <string name="export_credentials_hint">файл для настройки другого устройства или настольного приложения — в нём пароль</string>

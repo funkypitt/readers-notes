@@ -35,6 +35,10 @@
     <string name="widget_list_name">Reader\'s Notes · letzte Notizen</string>
     <string name="widget_line_desc">die letzte Notiz, + für eine neue</string>
     <string name="widget_list_desc">die letzten Notizen, + für eine neue</string>
+    <string name="widget_note_name">Reader\'s Notes · eine Notiz</string>
+    <string name="widget_note_desc">eine Notiz Ihrer Wahl, immer im Blick; antippen zum Schreiben</string>
+    <string name="widget_note_pick">Notiz zum Anzeigen</string>
+    <string name="widget_note_gone">diese Notiz wurde gelöscht</string>
     <string name="empty_short">keine Notiz</string>
     <string name="export_credentials">Zugangsdaten exportieren</string>
     <string name="export_credentials_hint">eine Datei, um ein anderes Gerät oder die Desktop-App einzurichten — sie enthält das Passwort</string>

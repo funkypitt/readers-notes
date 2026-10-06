@@ -60,7 +60,7 @@ object NotesWidgets {
         mgr.notifyAppWidgetViewDataChanged(id, R.id.widget_list)
     }
 
-    fun refresh(context: Context) = WidgetUi.refresh(context, LineWidget::class.java, ListWidget::class.java)
+    fun refresh(context: Context) = WidgetUi.refresh(context, LineWidget::class.java, ListWidget::class.java, NoteWidget::class.java)
 }
 
 class LineWidget : AppWidgetProvider() {

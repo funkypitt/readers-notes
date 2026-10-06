@@ -1,0 +1,1 @@
+New home-screen widget « one note »: pick a note when you place the widget (or write a new one) and it stays in view, title and text, on about half the screen, like a post-it. Tap it to write; the widget follows every change. From the widget's menu you can choose another note.

@@ -35,6 +35,10 @@
     <string name="widget_list_name">Reader\'s Notes · últimas notas</string>
     <string name="widget_line_desc">la última nota, + para escribir una</string>
     <string name="widget_list_desc">las últimas notas, + para escribir una</string>
+    <string name="widget_note_name">Reader\'s Notes · una nota</string>
+    <string name="widget_note_desc">una nota a su elección, siempre a la vista; tóquela para escribir</string>
+    <string name="widget_note_pick">nota que mostrar</string>
+    <string name="widget_note_gone">esta nota se eliminó</string>
     <string name="empty_short">ninguna nota</string>
     <string name="export_credentials">exportar credenciales</string>
     <string name="export_credentials_hint">un archivo para configurar otro dispositivo o la app de escritorio — contiene la contraseña</string>

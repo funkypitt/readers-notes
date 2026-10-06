@@ -1,0 +1,1 @@
+Nouveau widget d'écran d'accueil « une note » : choisissez une note en plaçant le widget (ou écrivez-en une nouvelle) et elle reste sous les yeux, titre et texte, sur environ la moitié de l'écran, comme un post-it. Touchez-la pour écrire ; le widget suit chaque modification. Depuis le menu du widget, vous pouvez choisir une autre note.

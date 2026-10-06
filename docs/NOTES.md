@@ -34,8 +34,14 @@ itself stays a plain text field, where a tap places the cursor and a long press 
 
 ## Widgets
 
-Two standard home-screen widgets for any launcher, black and white: the latest note (one line,
-+ for a new one) and the latest notes as a list. Tap a note to open it.
+Three standard home-screen widgets for any launcher, black and white: the latest note (one line,
++ for a new one), the latest notes as a list, and **one note** (1.7.0): a note chosen when the widget
+is placed (`NoteWidgetConfigure`, the launcher's configure activity, « + new note » creates one and
+opens it), shown title + text on about half a screen (minHeight 350dp = 10 cells in Reader's
+Launcher), tap to edit; every keystroke redraws it through `NotesStore.saveIndex` → `NotesWidgets.refresh`.
+The widget → note mapping lives in the "widgets" preferences (`note_<widgetId>`), cleared in `onDeleted`;
+a deleted note leaves « this note was deleted ». `widgetFeatures="reconfigurable"` lets the launcher
+offer « configure » again (the current note is marked ●).
 
 ## Folders (1.6.0, optional)
 

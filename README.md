@@ -25,7 +25,8 @@ No formatting, no folders, no account. In the family of
   "write to …", "open …"); the dialer never calls by itself.
 * The network is used for your WebDAV server and the model download only. Credentials export
   and import as a file for another device or the desktop app.
-* Two home-screen widgets (latest note, latest notes). For a launcher,
+* Three home-screen widgets: latest note, latest notes, and one chosen note kept in view like a
+  post-it, tap to edit. For a launcher,
   `content://com.freedomfighter.readersnotes/notes/dictate` (VIEW) opens a new note, microphone open.
 
 More detail: [docs/NOTES.md](docs/NOTES.md).
