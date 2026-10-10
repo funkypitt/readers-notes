@@ -72,6 +72,7 @@
     <string name="quality_high">sorgfältig</string>
     <string name="speak_here">Sprechen Sie. Tippen Sie auf ■, wenn Sie fertig sind; die Worte erscheinen einen Augenblick später.</string>
     <string name="all_notes">alle Notizen</string>
+    <string name="books">Bücher</string>
     <string name="new_folder">neuer Ordner</string>
     <string name="new_folder_name">Name des neuen Ordners</string>
     <string name="move_to_folder">in einen Ordner verschieben</string>

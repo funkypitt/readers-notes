@@ -127,7 +127,7 @@ class NoteWidgetConfigure : ComponentActivity() {
                             items(notes, key = { it.id }) { n ->
                                 val title = app.store.title(n.id).ifBlank { stringResource(R.string.untitled) }
                                 val preview = app.store.preview(n.id)
-                                val where = if (settings.useFolders && n.folder.isNotEmpty()) " · ${n.folder}" else ""
+                                val where = if (n.isBook) " · " + stringResource(R.string.books) else if (settings.useFolders && n.folder.isNotEmpty()) " · ${n.folder}" else ""
                                 Column(Modifier.fillMaxWidth().noRippleClickable { choose(n.id, thenWrite = false) }
                                     .padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
                                     T((if (n.id == current) "● " else "") + title, size = typo.title, maxLines = 1)

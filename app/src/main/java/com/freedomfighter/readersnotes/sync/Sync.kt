@@ -22,6 +22,12 @@ import com.freedomfighter.readersnotes.data.encodeSegment
  * another one (typed in the settings, or brought by a credentials file), the notes here are
  * treated as never synced: all are kept and uploaded, none is deleted (as the desktop does).
  * One whose file is already there with the same text takes that file instead of a second one.
+ *
+ * Book notes (1.8.0): the subfolder [NotesStore.BOOKS_FOLDER] belongs to Reader's Books, which
+ * writes one note per book there. Whatever the folders setting says, its notes are copied here
+ * and follow the server: new there, changed there, gone there. Nothing goes the other way: no
+ * file is written, renamed or deleted in it, and the subfolder itself is neither made nor removed.
+ * It is not one of the reader's folders, and stays out of everything said about folders above.
  */
 object Sync {
     class Result(val uploaded: Int, val downloaded: Int, val deleted: Int)
@@ -44,8 +50,9 @@ object Sync {
         val remote = HashMap<String, RemoteFile>()
         entries.filter { !it.isDir && isNote(it.name) }.forEach { remote[it.name] = it }
         val withFolders = settings.useFolders || store.usesFolders()
-        val serverDirs = if (withFolders) entries.filter { it.isDir && !it.name.startsWith(".") }.map { it.name }.toSet() else emptySet()
-        val gone = store.goneFolders().toSet()
+        val books = NotesStore.BOOKS_FOLDER
+        val serverDirs = if (withFolders) entries.filter { it.isDir && !it.name.startsWith(".") && it.name != books }.map { it.name }.toSet() else emptySet()
+        val gone = store.goneFolders().toSet() - books
         val present = serverDirs.toMutableSet()
         if (withFolders) {
             for (d in serverDirs) {
@@ -65,6 +72,7 @@ object Sync {
         val removed = HashSet<String>()   // deleted on the server during this run
 
         for (note in store.all()) {
+            if (note.isBook) continue   // read only: see below
             val here = note.remoteName?.let { key(note.remoteFolder, it) }
             val r = here?.let { remote[it] }
             if (note.deleted) {
@@ -121,6 +129,23 @@ object Sync {
             if (folder in gone) continue   // a folder deleted here: its leftovers are not brought back
             val theirs = dav.getOrNull(url(folder, k.substringAfter('/'))) ?: continue   // vanished meanwhile
             store.applyRemote(null, k.substringAfter('/'), r.etag, theirs, if (r.modified > 0) r.modified else System.currentTimeMillis(), folder); down++
+        }
+        // The book notes: what the server holds is copied here, and what it no longer holds goes.
+        val bookFiles = if (entries.any { it.isDir && it.name == books }) dav.list(dirUrl(books)).filter { !it.isDir && isNote(it.name) }.associateBy { it.name } else emptyMap()
+        for (note in store.all().filter { it.isBook }) {
+            val r = bookFiles[note.remoteName]
+            if (r == null) { store.purge(note.id); if (!note.deleted) del++ }
+            // marked changed or deleted here by a version that let it be: the server's text again
+            else if (r.etag != note.etag || note.dirty || note.deleted) {
+                val theirs = dav.getOrNull(url(books, r.name)) ?: continue
+                store.applyRemote(note.id, r.name, r.etag, theirs, if (r.modified > 0) r.modified else System.currentTimeMillis(), books); down++
+            }
+        }
+        val bookNames = store.all().filter { it.isBook }.mapNotNull { it.remoteName }.toSet()
+        for ((name, r) in bookFiles) {
+            if (name in bookNames) continue
+            val theirs = dav.getOrNull(url(books, name)) ?: continue
+            store.applyRemote(null, name, r.etag, theirs, if (r.modified > 0) r.modified else System.currentTimeMillis(), books); down++
         }
         // Folders deleted or renamed here: removed from the server once our notes have left them.
         // One still holding someone else's files stays there, and comes back here next time.

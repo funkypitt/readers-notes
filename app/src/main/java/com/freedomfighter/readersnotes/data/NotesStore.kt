@@ -15,6 +15,10 @@ import java.io.File
  *
  * Folders (optional, 1.6.0): [folder] is the note's folder here ("" = none), [remoteFolder] the
  * one it sits in on the server; a folder is a subfolder of the synced folder, one level deep.
+ *
+ * Book notes (1.8.0): the notes in [NotesStore.BOOKS_FOLDER] are written by Reader's Books on the
+ * server and only read here. That subfolder is not one of the reader's folders: it is never in the
+ * folder list, and its notes are never changed, moved or deleted from here.
  */
 @Serializable
 data class Note(
@@ -26,7 +30,10 @@ data class Note(
     val deleted: Boolean = false,
     val folder: String = "",
     val remoteFolder: String = ""
-)
+) {
+    /** A book's highlights, written by Reader's Books: read here, never changed. */
+    val isBook: Boolean get() = folder == NotesStore.BOOKS_FOLDER
+}
 
 /** A folder; [onServer]: seen on the server or created there, so its absence there means it was deleted there. */
 @Serializable
@@ -57,7 +64,19 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
     private val _folders = MutableStateFlow(index.folders)
     val folderList: StateFlow<List<NoteFolder>> = _folders
 
-    private fun loadIndex(): Index = runCatching { json.decodeFromString<Index>(indexFile.readText()) }.getOrDefault(Index())
+    private fun loadIndex(): Index = runCatching { json.decodeFromString<Index>(indexFile.readText()) }.getOrDefault(Index()).let { booksApart(it) }
+    /**
+     * An index written when the books' subfolder was a folder like the others: it leaves the folder
+     * lists, and only what came from it stays in it. A note written or moved into it here becomes a
+     * note without folder; one moved out of it here is a new note, its file there left alone.
+     */
+    private fun booksApart(i: Index): Index = i.copy(
+        notes = i.notes.map {
+            if (it.folder == BOOKS_FOLDER && (it.remoteName == null || it.remoteFolder != BOOKS_FOLDER)) it.copy(folder = "", dirty = true)
+            else if (it.folder != BOOKS_FOLDER && it.remoteFolder == BOOKS_FOLDER) it.copy(remoteName = null, remoteFolder = "", etag = null, dirty = true)
+            else it
+        },
+        folders = i.folders.filter { it.name != BOOKS_FOLDER }, goneFolders = i.goneFolders - BOOKS_FOLDER)
     private fun saveIndex(all: List<Note>, folders: List<NoteFolder> = index.folders, gone: List<String> = index.goneFolders, place: String? = index.place) {
         index = Index(all, folders, gone, place)
         val tmp = File(indexFile.parentFile, "notes.json.tmp")
@@ -78,7 +97,8 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
     fun create(text: String = "", folder: String = ""): String = synchronized(lock) {
         val id = System.currentTimeMillis().toString(36) + (1000..9999).random()
         file(id).writeText(text)
-        saveIndex(all() + Note(id = id, modified = System.currentTimeMillis(), folder = folder))
+        // nothing is written in the books' folder from here
+        saveIndex(all() + Note(id = id, modified = System.currentTimeMillis(), folder = if (folder == BOOKS_FOLDER) "" else folder))
         id
     }
 
@@ -91,13 +111,15 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
     /** Returns the name kept (made safe for a file system), or null when empty or taken. */
     fun addFolder(name: String): String? = synchronized(lock) {
         val n = folderNameOf(name) ?: return null
+        if (n.equals(BOOKS_FOLDER, ignoreCase = true)) return null
         if (index.folders.any { it.name.equals(n, ignoreCase = true) }) return null
         saveIndex(all(), index.folders + NoteFolder(n), index.goneFolders - n)
         n
     }
 
-    /** A note to another folder ("" = none): it goes up again under its new path at the next sync. */
+    /** A note to another folder ("" = none): it goes up again under its new path at the next sync. A book note stays where it is, and nothing joins it. */
     fun move(id: String, folder: String) = synchronized(lock) {
+        if (folder == BOOKS_FOLDER || get(id)?.isBook == true) return@synchronized
         saveIndex(all().map { if (it.id == id && it.folder != folder) it.copy(folder = folder, dirty = true) else it })
     }
 
@@ -105,6 +127,7 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
     fun renameFolder(old: String, name: String): String? = synchronized(lock) {
         val n = folderNameOf(name) ?: return null
         if (n == old) return n
+        if (old == BOOKS_FOLDER || n.equals(BOOKS_FOLDER, ignoreCase = true)) return null
         if (index.folders.any { it.name.equals(n, ignoreCase = true) && it.name != old }) return null
         val gone = if (index.folders.any { it.name == old && it.onServer }) index.goneFolders + old else index.goneFolders
         saveIndex(all().map { if (it.folder == old) it.copy(folder = n, dirty = true) else it },
@@ -114,22 +137,25 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
 
     /** The folder goes; its notes stay, in "all notes" only. */
     fun deleteFolder(name: String) = synchronized(lock) {
+        if (name == BOOKS_FOLDER) return@synchronized
         val gone = if (index.folders.any { it.name == name && it.onServer }) index.goneFolders + name else index.goneFolders
         saveIndex(all().map { if (it.folder == name) it.copy(folder = "", dirty = true) else it }, index.folders.filter { it.name != name }, gone)
     }
 
     // folder side of the sync
     fun folderOnServer(name: String) = synchronized(lock) {
+        if (name == BOOKS_FOLDER) return@synchronized
         val has = index.folders.any { it.name == name }
         saveIndex(all(), if (has) index.folders.map { if (it.name == name) it.copy(onServer = true) else it } else index.folders + NoteFolder(name, true))
     }
     fun folderGoneThere(name: String) = synchronized(lock) { saveIndex(all(), index.folders.filter { it.name != name }) }
     fun folderRemovedThere(name: String) = synchronized(lock) { saveIndex(all(), index.folders, index.goneFolders - name) }
-    /** Anything placed in a folder, here or there: the subfolders are then synced whatever the setting says. */
-    fun usesFolders(): Boolean = synchronized(lock) { index.folders.isNotEmpty() || index.goneFolders.isNotEmpty() || index.notes.any { it.folder.isNotEmpty() || it.remoteFolder.isNotEmpty() } }
+    /** Anything placed in a folder, here or there: the subfolders are then synced whatever the setting says. The book notes do not count. */
+    fun usesFolders(): Boolean = synchronized(lock) { index.folders.isNotEmpty() || index.goneFolders.isNotEmpty() || index.notes.any { !it.isBook && (it.folder.isNotEmpty() || it.remoteFolder.isNotEmpty()) } }
 
     /** Called on every keystroke (cheap: one small file). */
     fun save(id: String, text: String) = synchronized(lock) {
+        if (get(id)?.isBook == true) return@synchronized
         if (file(id).exists() && file(id).readText() == text) return@synchronized
         file(id).writeText(text)
         saveIndex(all().map { if (it.id == id) it.copy(modified = System.currentTimeMillis(), dirty = true) else it })
@@ -137,6 +163,7 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
 
     fun delete(id: String) = synchronized(lock) {
         val n = get(id) ?: return@synchronized
+        if (n.isBook) return@synchronized
         if (n.remoteName == null) { file(id).delete(); saveIndex(all().filter { it.id != id }) }
         else saveIndex(all().map { if (it.id == id) it.copy(deleted = true, modified = System.currentTimeMillis()) else it })
     }
@@ -159,8 +186,9 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
     }
     fun place(): String? = synchronized(lock) { index.place }
     private fun forgetServer() {
-        all().filter { it.deleted }.forEach { file(it.id).delete() }
-        saveIndex(all().filter { !it.deleted }.map { it.copy(remoteName = null, remoteFolder = "", etag = null, dirty = true) },
+        // the book notes are a copy of what the old place held: they go, and come from the new one if it has any
+        all().filter { it.deleted || it.isBook }.forEach { file(it.id).delete() }
+        saveIndex(all().filter { !it.deleted && !it.isBook }.map { it.copy(remoteName = null, remoteFolder = "", etag = null, dirty = true) },
             index.folders.map { it.copy(onServer = false) }, emptyList())
     }
     /** A file from the server, new here or changed there. */
@@ -173,6 +201,8 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
     }
 
     companion object {
+        /** The subfolder of the synced folder where Reader's Books writes its notes, one per book. */
+        const val BOOKS_FOLDER = "Reader's Books"
         private fun notifier(appContext: Context): () -> Unit {
             val changeUri = android.net.Uri.parse("content://com.freedomfighter.readersnotes/notes")
             val resolver = appContext.contentResolver

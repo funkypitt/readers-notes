@@ -72,6 +72,7 @@
     <string name="quality_high">cuidada</string>
     <string name="speak_here">habla. Toca ■ cuando termines; las palabras aparecen un momento después.</string>
     <string name="all_notes">todas las notas</string>
+    <string name="books">libros</string>
     <string name="new_folder">nueva carpeta</string>
     <string name="new_folder_name">nombre de la nueva carpeta</string>
     <string name="move_to_folder">mover a una carpeta</string>

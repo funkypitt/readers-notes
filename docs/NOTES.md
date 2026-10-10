@@ -65,4 +65,15 @@ Tested 2026-09-26 against wsgidav (emulator + headless desktop): off = subfolder
 subfolder pulled as a folder; new folder + note; move; rename; delete here; delete there; off
 after use keeps syncing; phone ↔ desktop see the same folders.
 
+## Book notes (1.8.0)
+
+Reader's Books writes one note per book (its highlights) in the subfolder `Reader's Books`
+(`NotesStore.BOOKS_FOLDER`) of the synced folder. Notes only reads it: `Sync.run` lists it whatever
+the folders setting says and copies it one way (new, changed, gone there); no PUT, DELETE or MKCOL
+ever goes there. It is not a folder of the reader's: skipped among the server's subfolders, refused
+by `addFolder`/`renameFolder`, not counted by `usesFolders`; the store ignores `save`, `delete`
+and `move` on a book note (`Note.isBook`), and another server or folder drops them. UI: `ReadScreen`
+(selectable text, no keyboard, no dictation), a « books » row in `FoldersScreen` when there are any.
+JVM tests only (`SyncTest`); the screens were not seen on a device.
+
 Prompts now open a pre-filled value selected (the Reader's rule): `TextPrompt` keeps a TextFieldValue.

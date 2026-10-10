@@ -1,0 +1,1 @@
+The notes Reader's Books writes for each book (its highlights) appear among your notes, to read: they are in the list, and under « books » when folders are on. They follow what Reader's Books writes on the server; they cannot be changed, moved or deleted from Notes.

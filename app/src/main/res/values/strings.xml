@@ -73,6 +73,7 @@
     <string name="quality_high">careful</string>
     <string name="speak_here">speak. Tap ■ when you have finished; the words appear a moment later.</string>
     <string name="all_notes">all notes</string>
+    <string name="books">books</string>
     <string name="new_folder">new folder</string>
     <string name="new_folder_name">name of the new folder</string>
     <string name="move_to_folder">move to a folder</string>

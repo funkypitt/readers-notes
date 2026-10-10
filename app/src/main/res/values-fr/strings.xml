@@ -72,6 +72,7 @@
     <string name="quality_high">soignée</string>
     <string name="speak_here">parlez. Touchez ■ quand vous avez fini ; les mots apparaissent un instant après.</string>
     <string name="all_notes">toutes les notes</string>
+    <string name="books">livres</string>
     <string name="new_folder">nouveau dossier</string>
     <string name="new_folder_name">nom du nouveau dossier</string>
     <string name="move_to_folder">déplacer vers un dossier</string>

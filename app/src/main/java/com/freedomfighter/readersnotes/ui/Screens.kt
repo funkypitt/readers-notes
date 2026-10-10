@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -107,7 +109,9 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
     val notes = remember(all, query, nav.version, folder) {
         app.store.live().filter { (folder == null || it.folder == folder) && (query.isBlank() || app.store.text(it.id).contains(query, ignoreCase = true)) }
     }
-    val here = folder ?: ""
+    // the books' folder is read only: no new note in it, and none offered from its page
+    val books = folder == NotesStore.BOOKS_FOLDER
+    val here = if (books) "" else folder ?: ""
     fun newNote() { nav.push(Screen.Edit(app.store.create(folder = here))) }
     var moving by remember { mutableStateOf<String?>(null) }
     if (inFolders) BackHandler { if (query.isNotBlank() && initialQuery.isBlank()) query = "" else nav.pop() }
@@ -116,7 +120,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
     LaunchedEffect(nav.wantDictate) { if (nav.wantDictate) { nav.wantDictate = false; if (!live.recording) dictateNew() } }
     Page {
         Column(Modifier.fillMaxSize()) {
-            val place = when { !inFolders -> stringResource(R.string.app_title); folder == null -> stringResource(R.string.all_notes); else -> folder }
+            val place = when { !inFolders -> stringResource(R.string.app_title); folder == null -> stringResource(R.string.all_notes); books -> stringResource(R.string.books); else -> folder }
             ScreenTitle(
                 if (query.isBlank()) place else "“$query”",
                 onBack = if (inFolders) ({ if (query.isNotBlank() && initialQuery.isBlank()) query = "" else nav.pop() }) else if (query.isBlank()) null else ({ query = "" }),
@@ -132,14 +136,14 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
                     Column(Modifier.fillMaxWidth().pressable(onClick = { nav.push(Screen.Edit(n.id)) }, onLongPress = { noteMenu = n.id })
                         .padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
                         T(title, size = typo.title, maxLines = 1)
-                        val where = if (inFolders && folder == null && n.folder.isNotEmpty()) " · ${n.folder}" else ""
+                        val where = if (inFolders && folder == null && n.folder.isNotEmpty()) " · " + (if (n.isBook) stringResource(R.string.books) else n.folder) else ""
                         Small(whenLabel(n.modified, stringResource(R.string.yesterday)) + where + (if (preview.isNotEmpty()) " · $preview" else "") + (if (n.dirty && settings.configured) " · ✎" else ""), maxLines = 1)
                     }
                 }
             }
             Rule()
             // The two ways into a note, one tap each: write it, or say it.
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+            if (!books) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                 Box(Modifier.weight(1f)) { TextRow(stringResource(R.string.new_note), size = typo.title) { newNote() } }
                 Box(Modifier.weight(1f)) { DictateRow { app.store.create(folder = here).also { nav.push(Screen.Edit(it)) } } }
             }
@@ -150,7 +154,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
             Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
         }
         if (menu) TextMenu(null, buildList {
-            add(MenuItem(stringResource(R.string.new_note)) { newNote() })
+            if (!books) add(MenuItem(stringResource(R.string.new_note)) { newNote() })
             add(MenuItem(stringResource(R.string.find)) { asking = true })
             if (settings.configured) add(MenuItem(stringResource(R.string.sync_now)) { app.sync() })
         }, onDismiss = { menu = false }, footer = listOf(
@@ -158,9 +162,11 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
             MenuItem(stringResource(R.string.settings)) { nav.push(Screen.Settings) }
         ))
         noteMenu?.let { id ->
+            val book = app.store.get(id)?.isBook == true   // nothing that changes it
             TextMenu(app.store.title(id).ifBlank { stringResource(R.string.untitled) }, buildList {
                 addAll(linkItems(context, app.store.text(id)))
                 add(MenuItem(stringResource(R.string.share)) { share(context, app.store.text(id)) })
+                if (book) return@buildList
                 if (settings.useFolders) add(MenuItem(stringResource(R.string.move_to_folder)) { moving = id })
                 add(MenuItem(stringResource(R.string.delete)) { app.store.delete(id); app.sync() })
             }, onDismiss = { noteMenu = null })
@@ -228,6 +234,9 @@ fun FoldersScreen(nav: Nav, app: App) {
                 items(sorted, key = { "f:" + it.name }) { f ->
                     FolderRow(f.name, all.count { !it.deleted && it.folder == f.name }, onLongPress = { folderMenu = f.name }) { nav.push(Screen.Folder(f.name)) }
                 }
+                // the book notes written by Reader's Books: a row like a folder's, with nothing to rename or delete
+                val books = all.count { !it.deleted && it.isBook }
+                if (books > 0) item(key = "books") { FolderRow(stringResource(R.string.books), books) { nav.push(Screen.Folder(NotesStore.BOOKS_FOLDER)) } }
                 item(key = "+") { FolderRow(stringResource(R.string.new_folder), null, dashed = true) { creating = true } }
             }
             Rule()
@@ -312,6 +321,8 @@ fun share(context: android.content.Context, text: String) {
 
 @Composable
 fun EditScreen(nav: Nav, app: App, id: String) {
+    // a book note is read, not written; decided once, so that a note removed by a sync never turns into a page to write on
+    if (remember { app.store.get(id)?.isBook == true }) { ReadScreen(nav, app, id); return }
     val context = LocalContext.current
     val typo = LocalTypo.current
     val colors = LocalColors.current
@@ -375,6 +386,42 @@ fun EditScreen(nav: Nav, app: App, id: String) {
             addAll(linkItems(context, value.text))
             add(MenuItem(stringResource(R.string.share)) { share(context, value.text) })
             add(MenuItem(stringResource(R.string.delete)) { app.store.delete(id); nav.pop(); app.sync() })
+        }, onDismiss = { menu = false }, footer = listOf(
+            MenuItem(if (colors.isDark) stringResource(R.string.theme_light) else stringResource(R.string.theme_dark)) { app.prefs.toggleTheme(colors.isDark) }
+        ))
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// A book note: its text to read, select and share; nothing to write, say or delete
+// ---------------------------------------------------------------------------------------------
+
+@Composable
+fun ReadScreen(nav: Nav, app: App, id: String) {
+    val context = LocalContext.current
+    val typo = LocalTypo.current
+    val colors = LocalColors.current
+    val all by app.store.notes.collectAsState()
+    // the text follows the server: read again after every sync
+    val text = remember(all) { app.store.text(id) }
+    var menu by remember { mutableStateOf(false) }
+    BackHandler { nav.pop() }
+    // removed on the server while it was open: back to the list
+    LaunchedEffect(all) { if (all.none { it.id == id && !it.deleted }) nav.pop() }
+    Page {
+        Column(Modifier.fillMaxSize()) {
+            ScreenTitle(NotesStore.titleOf(text).ifBlank { stringResource(R.string.untitled) }, onBack = { nav.pop() }, trailing = "⋯", onTrailing = { menu = true })
+            Box(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
+                SelectionContainer {
+                    BasicText(text, Modifier.fillMaxWidth().padding(horizontal = rowPadH, vertical = 14.dp),
+                        style = TextStyle(color = colors.fg, fontFamily = typo.family, fontWeight = typo.weight, fontSize = typo.title, lineHeight = typo.title * 1.45f))
+                }
+            }
+            Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
+        }
+        if (menu) TextMenu(null, buildList {
+            addAll(linkItems(context, text))
+            add(MenuItem(stringResource(R.string.share)) { share(context, text) })
         }, onDismiss = { menu = false }, footer = listOf(
             MenuItem(if (colors.isDark) stringResource(R.string.theme_light) else stringResource(R.string.theme_dark)) { app.prefs.toggleTheme(colors.isDark) }
         ))

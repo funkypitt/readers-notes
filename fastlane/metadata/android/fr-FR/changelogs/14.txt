@@ -1,0 +1,1 @@
+Les notes que Reader's Books écrit pour chaque livre (ses passages surlignés) apparaissent parmi vos notes, en lecture seule : dans la liste, et sous « livres » quand les dossiers sont activés. Elles suivent ce que Reader's Books écrit sur le serveur ; elles ne peuvent être ni modifiées, ni déplacées, ni supprimées depuis Notes.

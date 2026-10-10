@@ -21,6 +21,9 @@ No formatting, no folders, no account. In the family of
   top of the settings. It runs when the app opens, when a note is left, and from the ⋯ menu.
 * A note changed on both sides keeps the server's text as a second note ("… (server copy)").
   The status line under the list says what happened.
+* The notes [Reader's Books](https://github.com/funkypitt/readers-books) writes for each book
+  (its highlights, in the subfolder `Reader's Books`) show among the others, read-only: they
+  follow the server and nothing is ever written there from Notes.
 * Phone numbers, mail addresses and links in a note are offered in its ⋯ menu ("call …",
   "write to …", "open …"); the dialer never calls by itself.
 * The network is used for your WebDAV server and the model download only. Credentials export
