@@ -42,6 +42,8 @@
     <string name="empty_short">keine Notiz</string>
     <string name="export_credentials">Zugangsdaten exportieren</string>
     <string name="export_credentials_hint">eine Datei, um ein anderes Gerät oder die Desktop-App einzurichten — sie enthält das Passwort</string>
+    <string name="export_saved">gespeichert als %1$s</string>
+    <string name="share_export">diese Datei teilen…</string>
     <string name="import_credentials">Zugangsdaten importieren</string>
     <string name="credentials_imported">Zugangsdaten importiert</string>
     <string name="credentials_imported_from">Server und Login aus %1$s übernommen</string>
