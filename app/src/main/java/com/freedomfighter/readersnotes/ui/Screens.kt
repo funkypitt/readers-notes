@@ -51,6 +51,7 @@ import com.freedomfighter.readersnotes.data.Credentials
 import com.freedomfighter.readersnotes.data.CredentialsShare
 import com.freedomfighter.readersnotes.data.FontChoice
 import com.freedomfighter.readersnotes.data.NotesStore
+import com.freedomfighter.readersnotes.data.Palettes
 import com.freedomfighter.readersnotes.data.Prefs
 import com.freedomfighter.readersnotes.data.findLinks
 import com.freedomfighter.readersnotes.data.openLink
@@ -158,7 +159,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
             add(MenuItem(stringResource(R.string.find)) { asking = true })
             if (settings.configured) add(MenuItem(stringResource(R.string.sync_now)) { app.sync() })
         }, onDismiss = { menu = false }, footer = listOf(
-            MenuItem(if (colors.isDark) stringResource(R.string.theme_light) else stringResource(R.string.theme_dark)) { app.prefs.toggleTheme(colors.isDark) },
+            MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() },
             MenuItem(stringResource(R.string.settings)) { nav.push(Screen.Settings) }
         ))
         noteMenu?.let { id ->
@@ -256,7 +257,7 @@ fun FoldersScreen(nav: Nav, app: App) {
             add(MenuItem(stringResource(R.string.find)) { asking = true })
             if (settings.configured) add(MenuItem(stringResource(R.string.sync_now)) { app.sync() })
         }, onDismiss = { menu = false }, footer = listOf(
-            MenuItem(if (colors.isDark) stringResource(R.string.theme_light) else stringResource(R.string.theme_dark)) { app.prefs.toggleTheme(colors.isDark) },
+            MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() },
             MenuItem(stringResource(R.string.settings)) { nav.push(Screen.Settings) }
         ))
         folderMenu?.let { f ->
@@ -387,7 +388,7 @@ fun EditScreen(nav: Nav, app: App, id: String) {
             add(MenuItem(stringResource(R.string.share)) { share(context, value.text) })
             add(MenuItem(stringResource(R.string.delete)) { app.store.delete(id); nav.pop(); app.sync() })
         }, onDismiss = { menu = false }, footer = listOf(
-            MenuItem(if (colors.isDark) stringResource(R.string.theme_light) else stringResource(R.string.theme_dark)) { app.prefs.toggleTheme(colors.isDark) }
+            MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() }
         ))
     }
 }
@@ -401,6 +402,7 @@ fun ReadScreen(nav: Nav, app: App, id: String) {
     val context = LocalContext.current
     val typo = LocalTypo.current
     val colors = LocalColors.current
+    val settings by app.prefs.settings.collectAsState()
     val all by app.store.notes.collectAsState()
     // the text follows the server: read again after every sync
     val text = remember(all) { app.store.text(id) }
@@ -423,7 +425,7 @@ fun ReadScreen(nav: Nav, app: App, id: String) {
             addAll(linkItems(context, text))
             add(MenuItem(stringResource(R.string.share)) { share(context, text) })
         }, onDismiss = { menu = false }, footer = listOf(
-            MenuItem(if (colors.isDark) stringResource(R.string.theme_light) else stringResource(R.string.theme_dark)) { app.prefs.toggleTheme(colors.isDark) }
+            MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() }
         ))
     }
 }
@@ -505,7 +507,7 @@ fun SettingsScreen(nav: Nav, app: App) {
                     app.prefs.setDictationLanguage(all[(all.indexOf(s.dictationLanguage).coerceAtLeast(0) + 1) % all.size])
                 }
                 Rule(Modifier.padding(vertical = 8.dp))
-                TextRow(if (colors.isDark) stringResource(R.string.theme_dark) else stringResource(R.string.theme_light), secondary = stringResource(R.string.colours)) { app.prefs.toggleTheme(colors.isDark) }
+                TextRow(themeName(s.theme), secondary = stringResource(R.string.colours)) { app.prefs.nextTheme() }
                 TextRow(when (s.textSize) { TextSize.SMALL -> "S"; TextSize.MEDIUM -> "M"; TextSize.LARGE -> "L" }, secondary = stringResource(R.string.text_size)) {
                     app.prefs.setTextSize(when (s.textSize) { TextSize.SMALL -> TextSize.MEDIUM; TextSize.MEDIUM -> TextSize.LARGE; TextSize.LARGE -> TextSize.SMALL })
                 }

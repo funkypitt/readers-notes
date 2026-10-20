@@ -13,8 +13,8 @@ android {
         applicationId = "com.freedomfighter.readersnotes"
         minSdk = 26
         targetSdk = 34
-        versionCode = 15
-        versionName = "1.9.0"
+        versionCode = 16
+        versionName = "1.10.0"
     }
 
     buildTypes { release { isMinifyEnabled = false } }
