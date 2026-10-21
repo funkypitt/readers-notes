@@ -165,8 +165,8 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
             Rule()
             // The two ways into a note, one tap each: write it, or say it.
             if (!books) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-                Box(Modifier.weight(1f)) { TextRow(stringResource(R.string.new_note), size = typo.title) { newNote() } }
-                Box(Modifier.weight(1f)) { DictateRow { app.store.create(folder = here).also { nav.push(Screen.Edit(it)) } } }
+                Box(Modifier.weight(1f)) { Side(end = false) { TextRow(stringResource(R.string.new_note), size = typo.title) { newNote() } } }
+                Box(Modifier.weight(1f)) { Side(start = false) { DictateRow { app.store.create(folder = here).also { nav.push(Screen.Edit(it)) } } } }
             }
             if (live.message.isNotEmpty()) Small(live.message, Modifier.padding(horizontal = rowPadH).padding(bottom = 6.dp), maxLines = 2)
             if (status.isNotEmpty() || !settings.configured) {
@@ -339,8 +339,8 @@ fun FoldersScreen(nav: Nav, app: App) {
             }
             Rule()
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-                Box(Modifier.weight(1f)) { TextRow(stringResource(R.string.new_note), size = typo.title) { nav.push(Screen.Edit(app.store.create())) } }
-                Box(Modifier.weight(1f)) { DictateRow { app.store.create().also { nav.push(Screen.Edit(it)) } } }
+                Box(Modifier.weight(1f)) { Side(end = false) { TextRow(stringResource(R.string.new_note), size = typo.title) { nav.push(Screen.Edit(app.store.create())) } } }
+                Box(Modifier.weight(1f)) { Side(start = false) { DictateRow { app.store.create().also { nav.push(Screen.Edit(it)) } } } }
             }
             if (live.message.isNotEmpty()) Small(live.message, Modifier.padding(horizontal = rowPadH).padding(bottom = 6.dp), maxLines = 2)
             if (status.isNotEmpty() || !settings.configured) {

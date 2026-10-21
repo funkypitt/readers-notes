@@ -79,7 +79,8 @@ fun DictateRow(secondary: String? = null, target: () -> String) {
     Column {
         if (live.recording) {
             // the level line reads, it is not tapped: on the surface, as wide as the card under it
-            Progress(live.level.coerceIn(0f, 1f), Modifier.padding(horizontal = if (LocalColors.current.tiles) tileGap else 0.dp))
+            val (mStart, mEnd) = cardMargins()
+            Progress(live.level.coerceIn(0f, 1f), Modifier.padding(start = if (LocalColors.current.tiles) mStart else 0.dp, end = if (LocalColors.current.tiles) mEnd else 0.dp))
             TextRow("■ " + DictateService.clock(live.elapsedMs), inverted = true, size = typo.title, secondary = secondary) { tick(); DictateService.stop(context) }
         } else {
             TextRow("● " + stringResource(R.string.dictate), size = typo.title, secondary = secondary) { tick(); dictate() }
