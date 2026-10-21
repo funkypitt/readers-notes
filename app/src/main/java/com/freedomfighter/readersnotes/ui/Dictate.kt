@@ -10,6 +10,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -77,7 +78,8 @@ fun DictateRow(secondary: String? = null, target: () -> String) {
     val dictate = rememberDictate(target)
     Column {
         if (live.recording) {
-            Progress(live.level.coerceIn(0f, 1f))
+            // the level line reads, it is not tapped: on the surface, as wide as the card under it
+            Progress(live.level.coerceIn(0f, 1f), Modifier.padding(horizontal = if (LocalColors.current.tiles) tileGap else 0.dp))
             TextRow("■ " + DictateService.clock(live.elapsedMs), inverted = true, size = typo.title, secondary = secondary) { tick(); DictateService.stop(context) }
         } else {
             TextRow("● " + stringResource(R.string.dictate), size = typo.title, secondary = secondary) { tick(); dictate() }

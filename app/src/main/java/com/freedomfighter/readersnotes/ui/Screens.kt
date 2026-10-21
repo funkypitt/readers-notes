@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -149,8 +152,9 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
                 items(notes, key = { it.id }) { n ->
                     val title = app.store.title(n.id).ifBlank { stringResource(R.string.untitled) }
                     val preview = dictationStatus(n.id) ?: app.store.preview(n.id)
-                    Column(Modifier.fillMaxWidth().pressable(onClick = { nav.push(Screen.Edit(n.id)) }, onLongPress = { noteMenu = n.id })
-                        .padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
+                    // a note is a card with a colour theme, text on the page in the inks
+                    Column(Modifier.fillMaxWidth().tileCard().pressable(onClick = { nav.push(Screen.Edit(n.id)) }, onLongPress = { noteMenu = n.id })
+                        .padding(horizontal = tilePadH(), vertical = rowPadV * 0.7f)) {
                         T(title, size = typo.title, maxLines = 1)
                         val where = if (inFolders && folder == null && n.folder.isNotEmpty()) " · " + (if (n.isBook) stringResource(R.string.books) else n.folder) else ""
                         val tagged = app.store.tags(n.id).let { if (it.isEmpty()) "" else " · " + Tags.label(it) }
@@ -213,17 +217,23 @@ fun TagPicker(app: App, text: String, onText: (String) -> Unit, onDismiss: () ->
     val all = remember(known, own) { (known + own).distinct() }
     fun set(t: String) { current = if (t in own) Tags.remove(current, t) else Tags.add(current, t); onText(current) }
     BackHandler(onBack = onDismiss)
+    // the same sheet as a TextMenu: a rounded card with a colour theme, its rows flat inside
+    val tiles = colors.tiles
     Box(Modifier.fillMaxSize().background(colors.bg.copy(alpha = 0.6f)).noRippleClickable(onClick = onDismiss)) {
-        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(colors.bg).noRippleClickable { }.windowInsetsPadding(WindowInsets.navigationBars)) {
-            Rule(color = colors.fg)
+        CompositionLocalProvider(LocalInTile provides true) {
+        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+            .then(if (tiles) Modifier.padding(horizontal = tileGap).clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) else Modifier)
+            .background(if (tiles) colors.tile else colors.bg).noRippleClickable { }.windowInsetsPadding(WindowInsets.navigationBars)) {
+            if (tiles) Spacer(Modifier.height(10.dp)) else Rule(color = colors.fg)
             Small(stringResource(R.string.tags), Modifier.padding(horizontal = rowPadH).padding(top = 14.dp, bottom = 2.dp), maxLines = 1)
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
                 all.forEach { t -> TextRow((if (t in own) "● " else "○ ") + "#$t") { set(t) } }
                 TextRow(stringResource(R.string.new_tag)) { naming = true }
             }
-            Rule(Modifier.padding(vertical = 6.dp))
+            if (tiles) SheetRule() else Rule(Modifier.padding(vertical = 6.dp))
             TextRow(stringResource(R.string.done), size = LocalTypo.current.title, onClick = onDismiss)
             Spacer(Modifier.height(8.dp))
+        }
         }
     }
     if (naming) TextPrompt(stringResource(R.string.new_tag_name), onDone = { Tags.clean(it)?.let { t -> if (t !in own) set(t) }; naming = false }, onCancel = { naming = false })
@@ -244,7 +254,7 @@ fun TagsScreen(nav: Nav, app: App) {
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(top = 6.dp, bottom = 16.dp)) {
                 if (counts.isEmpty()) item { Small(stringResource(R.string.no_tags), Modifier.padding(horizontal = rowPadH, vertical = rowPadV), maxLines = 6) }
                 items(counts, key = { it.first }) { (t, n) ->
-                    Row(Modifier.fillMaxWidth().noRippleClickable { nav.push(Screen.Tagged(listOf(t))) }.padding(horizontal = rowPadH, vertical = rowPadV * 0.75f), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().tileCard().noRippleClickable { nav.push(Screen.Tagged(listOf(t))) }.padding(horizontal = tilePadH(), vertical = rowPadV * 0.75f), verticalAlignment = Alignment.CenterVertically) {
                         T("#$t", Modifier.weight(1f), size = typo.title, maxLines = 1)
                         Small(n.toString(), maxLines = 1)
                     }
@@ -369,8 +379,8 @@ fun FoldersScreen(nav: Nav, app: App) {
 @Composable
 private fun FolderRow(name: String, count: Int?, filled: Boolean = false, dashed: Boolean = false, hash: Boolean = false, onLongPress: (() -> Unit)? = null, onClick: () -> Unit) {
     val colors = LocalColors.current
-    Row(Modifier.fillMaxWidth().then(if (onLongPress != null) Modifier.pressable(onClick = onClick, onLongPress = onLongPress) else Modifier.noRippleClickable(onClick = onClick))
-        .padding(horizontal = rowPadH, vertical = rowPadV * 0.75f), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().tileCard().then(if (onLongPress != null) Modifier.pressable(onClick = onClick, onLongPress = onLongPress) else Modifier.noRippleClickable(onClick = onClick))
+        .padding(horizontal = tilePadH(), vertical = rowPadV * 0.75f), verticalAlignment = Alignment.CenterVertically) {
         if (hash) Box(Modifier.size(width = 30.dp, height = 23.dp), contentAlignment = Alignment.Center) { T("#", size = LocalTypo.current.title, align = TextAlign.Center) }
         else FolderGlyph(filled, dashed)
         T(name, Modifier.weight(1f).padding(start = 18.dp), size = LocalTypo.current.title, color = if (dashed) colors.dim else colors.fg, maxLines = 1)
