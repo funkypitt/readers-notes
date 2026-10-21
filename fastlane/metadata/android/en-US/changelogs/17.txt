@@ -1,0 +1,1 @@
+Tags: a word with # in front, anywhere in a note, is a tag. A note's menu adds or removes them; the new tags page lists them with their counts and shows the notes carrying one tag or several. Tags are plain text, so they travel with the note to the server and the desktop app.

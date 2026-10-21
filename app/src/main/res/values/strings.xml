@@ -107,4 +107,11 @@
     <string name="dictate_stopped">stopped</string>
     <string name="dictate_failed">not written yet: %1$s</string>
     <string name="credentials_unreadable">the file cannot be read: %1$s</string>
+    <string name="tags">tags</string>
+    <string name="tag_menu">tags…</string>
+    <string name="new_tag">+ new tag</string>
+    <string name="new_tag_name">name of the new tag</string>
+    <string name="no_tags">no tag yet. A tag is a word with # in front, written anywhere in a note: #work. A note\'s menu adds or removes them.</string>
+    <string name="narrow_tag">also with a tag…</string>
+    <string name="done">done</string>
 </resources>

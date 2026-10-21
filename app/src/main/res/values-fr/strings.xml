@@ -106,4 +106,11 @@
     <string name="dictate_stopped">arrêté</string>
     <string name="dictate_failed">pas encore écrit : %1$s</string>
     <string name="credentials_unreadable">le fichier est illisible : %1$s</string>
+    <string name="tags">tags</string>
+    <string name="tag_menu">tags…</string>
+    <string name="new_tag">+ nouveau tag</string>
+    <string name="new_tag_name">nom du nouveau tag</string>
+    <string name="no_tags">pas encore de tag. Un tag est un mot précédé de #, écrit n\'importe où dans une note : #travail. Le menu d\'une note en ajoute ou en retire.</string>
+    <string name="narrow_tag">aussi avec un tag…</string>
+    <string name="done">terminé</string>
 </resources>

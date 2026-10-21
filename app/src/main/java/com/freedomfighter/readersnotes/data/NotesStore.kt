@@ -92,7 +92,11 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
     fun get(id: String): Note? = all().firstOrNull { it.id == id }
 
     fun title(id: String): String = titleOf(text(id))
-    fun preview(id: String): String = text(id).lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.drop(1).firstOrNull() ?: ""
+    /** The second line of the note, tag lines left aside (they show in their own place). */
+    fun preview(id: String): String = text(id).lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.drop(1).firstOrNull { !Tags.isTagLine(it) } ?: ""
+    fun tags(id: String): List<String> = Tags.of(text(id))
+    /** Every tag of the live notes with its count, most used first. */
+    fun tagCounts(): List<Pair<String, Int>> = Tags.count(live().asSequence().map { text(it.id) })
 
     fun create(text: String = "", folder: String = ""): String = synchronized(lock) {
         val id = System.currentTimeMillis().toString(36) + (1000..9999).random()

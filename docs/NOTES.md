@@ -65,6 +65,21 @@ Tested 2026-09-26 against wsgidav (emulator + headless desktop): off = subfolder
 subfolder pulled as a folder; new folder + note; move; rename; delete here; delete there; off
 after use keeps syncing; phone ↔ desktop see the same folders.
 
+## Tags (1.11.0)
+
+A tag is `#word` written in the note's text (`data/Tags.kt`: start of text or white space before
+the `#`, letters/digits/`_`/`-`, at least one letter, lower-cased for comparison; `#12`, `C#` and
+`x.ch/#top` are not tags). Nothing in the index or the sync changes: the tags live in the file and
+the desktop reads them with the same rule (`tags_of` in readers-notes-desktop). `Tags.add` writes
+the tag on the last line when it holds only tags, else after a blank line at the end; `Tags.remove`
+takes the token and the space before it (after it when the tag starts its line) and trims emptied
+lines. `NotesStore.preview` skips tag-only lines; `tagCounts()` = every tag with its count, most
+used first. UI: the list's second line shows the tags; a note's long press and the editor's ⋯ offer
+« tags… » → `TagPicker` (a sheet of ●/○ rows that stays until « done », + new tag); `TagsScreen`
+(⋯ › tags, and a « # tags » row on the folders page once a tag exists) → `Screen.Tagged(tags)` =
+`NotesScreen(tags = …)` filtering on ALL the tags, across folders, with « also with a tag… » listing
+the other tags of the shown notes to narrow further. Tests: `TagsTest`.
+
 ## Book notes (1.8.0)
 
 Reader's Books writes one note per book (its highlights) in the subfolder `Reader's Books`

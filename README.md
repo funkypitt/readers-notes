@@ -24,6 +24,9 @@ No formatting, no folders, no account. In the family of
 * The notes [Reader's Books](https://github.com/funkypitt/readers-books) writes for each book
   (its highlights, in the subfolder `Reader's Books`) show among the others, read-only: they
   follow the server and nothing is ever written there from Notes.
+* Tags: a word with # in front, anywhere in a note (`#work`), is a tag. A note's menu adds or
+  removes them; the **tags** page lists them with their counts, and shows the notes carrying one
+  tag or several. Being plain text, tags travel with the note to the server and the desktop app.
 * Phone numbers, mail addresses and links in a note are offered in its ⋯ menu ("call …",
   "write to …", "open …"); the dialer never calls by itself.
 * The network is used for your WebDAV server and the model download only. Credentials export

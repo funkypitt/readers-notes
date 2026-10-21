@@ -39,6 +39,8 @@ class MainActivity : ComponentActivity() {
                     // keyed: the launcher can ask for another note while one is open
                     is Screen.Edit -> androidx.compose.runtime.key(s.id) { EditScreen(nav, app, s.id) }
                     Screen.Settings -> SettingsScreen(nav, app)
+                    Screen.Tags -> com.freedomfighter.readersnotes.ui.TagsScreen(nav, app)
+                    is Screen.Tagged -> androidx.compose.runtime.key(s.tags) { NotesScreen(nav, app, inFolders = true, tags = s.tags) }
                 }
             }
         }

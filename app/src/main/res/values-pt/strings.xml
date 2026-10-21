@@ -106,4 +106,11 @@
     <string name="dictate_stopped">parado</string>
     <string name="dictate_failed">ainda não escrito: %1$s</string>
     <string name="credentials_unreadable">não é possível ler o ficheiro: %1$s</string>
+    <string name="tags">etiquetas</string>
+    <string name="tag_menu">etiquetas…</string>
+    <string name="new_tag">+ nova etiqueta</string>
+    <string name="new_tag_name">nome da nova etiqueta</string>
+    <string name="no_tags">ainda nenhuma etiqueta. Uma etiqueta é uma palavra precedida de #, escrita em qualquer parte de uma nota: #trabalho. O menu de uma nota adiciona-as ou retira-as.</string>
+    <string name="narrow_tag">também com uma etiqueta…</string>
+    <string name="done">concluído</string>
 </resources>

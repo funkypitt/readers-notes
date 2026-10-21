@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -53,6 +56,7 @@ import com.freedomfighter.readersnotes.data.FontChoice
 import com.freedomfighter.readersnotes.data.NotesStore
 import com.freedomfighter.readersnotes.data.Palettes
 import com.freedomfighter.readersnotes.data.Prefs
+import com.freedomfighter.readersnotes.data.Tags
 import com.freedomfighter.readersnotes.data.findLinks
 import com.freedomfighter.readersnotes.data.openLink
 import com.freedomfighter.readersnotes.data.TextSize
@@ -68,6 +72,10 @@ sealed class Screen {
     data class Folder(val name: String?, val query: String = "") : Screen()
     data class Edit(val id: String) : Screen()
     data object Settings : Screen()
+    /** Every tag, with how many notes carry it. */
+    data object Tags : Screen()
+    /** The notes carrying all of [tags]. */
+    data class Tagged(val tags: List<String>) : Screen()
 }
 
 class Nav {
@@ -96,7 +104,7 @@ fun whenLabel(millis: Long, yesterday: String): String {
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean = false, initialQuery: String = "") {
+fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean = false, initialQuery: String = "", tags: List<String> = emptyList()) {
     val context = LocalContext.current
     val typo = LocalTypo.current
     val colors = LocalColors.current
@@ -107,9 +115,16 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
     var noteMenu by remember { mutableStateOf<String?>(null) }
     var query by remember { mutableStateOf(initialQuery) }
     var asking by remember { mutableStateOf(false) }
-    val notes = remember(all, query, nav.version, folder) {
-        app.store.live().filter { (folder == null || it.folder == folder) && (query.isBlank() || app.store.text(it.id).contains(query, ignoreCase = true)) }
+    val notes = remember(all, query, nav.version, folder, tags) {
+        app.store.live().filter { n ->
+            val text = app.store.text(n.id)
+            (folder == null || n.folder == folder) && (tags.isEmpty() || Tags.of(text).containsAll(tags)) && (query.isBlank() || text.contains(query, ignoreCase = true))
+        }
     }
+    // in a tagged list: the other tags carried by these notes, to narrow it further
+    val narrower = remember(notes, tags) { if (tags.isEmpty()) emptyList() else Tags.count(notes.asSequence().map { app.store.text(it.id) }).map { it.first }.filter { it !in tags } }
+    var narrowing by remember { mutableStateOf(false) }
+    var tagging by remember { mutableStateOf<String?>(null) }
     // the books' folder is read only: no new note in it, and none offered from its page
     val books = folder == NotesStore.BOOKS_FOLDER
     val here = if (books) "" else folder ?: ""
@@ -121,7 +136,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
     LaunchedEffect(nav.wantDictate) { if (nav.wantDictate) { nav.wantDictate = false; if (!live.recording) dictateNew() } }
     Page {
         Column(Modifier.fillMaxSize()) {
-            val place = when { !inFolders -> stringResource(R.string.app_title); folder == null -> stringResource(R.string.all_notes); books -> stringResource(R.string.books); else -> folder }
+            val place = when { tags.isNotEmpty() -> Tags.label(tags); !inFolders -> stringResource(R.string.app_title); folder == null -> stringResource(R.string.all_notes); books -> stringResource(R.string.books); else -> folder }
             ScreenTitle(
                 if (query.isBlank()) place else "“$query”",
                 onBack = if (inFolders) ({ if (query.isNotBlank() && initialQuery.isBlank()) query = "" else nav.pop() }) else if (query.isBlank()) null else ({ query = "" }),
@@ -138,7 +153,8 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
                         .padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
                         T(title, size = typo.title, maxLines = 1)
                         val where = if (inFolders && folder == null && n.folder.isNotEmpty()) " · " + (if (n.isBook) stringResource(R.string.books) else n.folder) else ""
-                        Small(whenLabel(n.modified, stringResource(R.string.yesterday)) + where + (if (preview.isNotEmpty()) " · $preview" else "") + (if (n.dirty && settings.configured) " · ✎" else ""), maxLines = 1)
+                        val tagged = app.store.tags(n.id).let { if (it.isEmpty()) "" else " · " + Tags.label(it) }
+                        Small(whenLabel(n.modified, stringResource(R.string.yesterday)) + where + tagged + (if (preview.isNotEmpty()) " · $preview" else "") + (if (n.dirty && settings.configured) " · ✎" else ""), maxLines = 1)
                     }
                 }
             }
@@ -157,6 +173,8 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
         if (menu) TextMenu(null, buildList {
             if (!books) add(MenuItem(stringResource(R.string.new_note)) { newNote() })
             add(MenuItem(stringResource(R.string.find)) { asking = true })
+            if (tags.isEmpty()) add(MenuItem(stringResource(R.string.tags)) { nav.push(Screen.Tags) })
+            else if (narrower.isNotEmpty()) add(MenuItem(stringResource(R.string.narrow_tag)) { narrowing = true })
             if (settings.configured) add(MenuItem(stringResource(R.string.sync_now)) { app.sync() })
         }, onDismiss = { menu = false }, footer = listOf(
             MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() },
@@ -168,12 +186,78 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
                 addAll(linkItems(context, app.store.text(id)))
                 add(MenuItem(stringResource(R.string.share)) { share(context, app.store.text(id)) })
                 if (book) return@buildList
+                add(MenuItem(stringResource(R.string.tag_menu)) { tagging = id })
                 if (settings.useFolders) add(MenuItem(stringResource(R.string.move_to_folder)) { moving = id })
                 add(MenuItem(stringResource(R.string.delete)) { app.store.delete(id); app.sync() })
             }, onDismiss = { noteMenu = null })
         }
         moving?.let { id -> MoveMenu(app, id) { moving = null } }
+        tagging?.let { id -> TagPicker(app, app.store.text(id), onText = { app.store.save(id, it) }) { tagging = null; if (settings.configured) app.sync() } }
+        if (narrowing) TextMenu(stringResource(R.string.narrow_tag), narrower.map { t -> MenuItem("#$t") { nav.push(Screen.Tagged(tags + t)) } }, onDismiss = { narrowing = false })
         if (asking) TextPrompt(stringResource(R.string.find), initial = query, confirm = stringResource(R.string.find), onDone = { query = it; asking = false }, onCancel = { asking = false })
+    }
+}
+
+/**
+ * The tags of a note, to switch on or off: every tag known in the notes, the note's own marked ●,
+ * then « + new tag ». The sheet stays until « done », so several tags are set in one go. Each
+ * change is given at once to [onText] (the new text of the note).
+ */
+@Composable
+fun TagPicker(app: App, text: String, onText: (String) -> Unit, onDismiss: () -> Unit) {
+    val colors = LocalColors.current
+    var current by remember { mutableStateOf(text) }
+    var naming by remember { mutableStateOf(false) }
+    val own = remember(current) { Tags.of(current) }
+    val known = remember { (app.store.tagCounts().map { it.first } + own).distinct() }
+    val all = remember(known, own) { (known + own).distinct() }
+    fun set(t: String) { current = if (t in own) Tags.remove(current, t) else Tags.add(current, t); onText(current) }
+    BackHandler(onBack = onDismiss)
+    Box(Modifier.fillMaxSize().background(colors.bg.copy(alpha = 0.6f)).noRippleClickable(onClick = onDismiss)) {
+        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(colors.bg).noRippleClickable { }.windowInsetsPadding(WindowInsets.navigationBars)) {
+            Rule(color = colors.fg)
+            Small(stringResource(R.string.tags), Modifier.padding(horizontal = rowPadH).padding(top = 14.dp, bottom = 2.dp), maxLines = 1)
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                all.forEach { t -> TextRow((if (t in own) "● " else "○ ") + "#$t") { set(t) } }
+                TextRow(stringResource(R.string.new_tag)) { naming = true }
+            }
+            Rule(Modifier.padding(vertical = 6.dp))
+            TextRow(stringResource(R.string.done), size = LocalTypo.current.title, onClick = onDismiss)
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+    if (naming) TextPrompt(stringResource(R.string.new_tag_name), onDone = { Tags.clean(it)?.let { t -> if (t !in own) set(t) }; naming = false }, onCancel = { naming = false })
+}
+
+/** Every tag with the number of notes carrying it; a tap shows those notes. */
+@Composable
+fun TagsScreen(nav: Nav, app: App) {
+    val typo = LocalTypo.current
+    val settings by app.prefs.settings.collectAsState()
+    val all by app.store.notes.collectAsState()
+    var menu by remember { mutableStateOf(false) }
+    val counts = remember(all, nav.version) { app.store.tagCounts() }
+    BackHandler { nav.pop() }
+    Page {
+        Column(Modifier.fillMaxSize()) {
+            ScreenTitle(stringResource(R.string.tags), onBack = { nav.pop() }, trailing = "⋯", onTrailing = { menu = true })
+            LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(top = 6.dp, bottom = 16.dp)) {
+                if (counts.isEmpty()) item { Small(stringResource(R.string.no_tags), Modifier.padding(horizontal = rowPadH, vertical = rowPadV), maxLines = 6) }
+                items(counts, key = { it.first }) { (t, n) ->
+                    Row(Modifier.fillMaxWidth().noRippleClickable { nav.push(Screen.Tagged(listOf(t))) }.padding(horizontal = rowPadH, vertical = rowPadV * 0.75f), verticalAlignment = Alignment.CenterVertically) {
+                        T("#$t", Modifier.weight(1f), size = typo.title, maxLines = 1)
+                        Small(n.toString(), maxLines = 1)
+                    }
+                }
+            }
+            Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
+        }
+        if (menu) TextMenu(null, buildList {
+            if (settings.configured) add(MenuItem(stringResource(R.string.sync_now)) { app.sync() })
+        }, onDismiss = { menu = false }, footer = listOf(
+            MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() },
+            MenuItem(stringResource(R.string.settings)) { nav.push(Screen.Settings) }
+        ))
     }
 }
 
@@ -224,6 +308,7 @@ fun FoldersScreen(nav: Nav, app: App) {
     var deleting by remember { mutableStateOf<String?>(null) }
     var asking by remember { mutableStateOf(false) }
     val sorted = remember(folders) { folders.sortedBy { it.name.lowercase() } }
+    val tags = remember(all, nav.version) { app.store.tagCounts().size }
     val live = DictateService.Live
     val dictateNew = rememberDictate { app.store.create().also { nav.push(Screen.Edit(it)) } }
     LaunchedEffect(nav.wantDictate) { if (nav.wantDictate) { nav.wantDictate = false; if (!live.recording) dictateNew() } }
@@ -238,6 +323,8 @@ fun FoldersScreen(nav: Nav, app: App) {
                 // the book notes written by Reader's Books: a row like a folder's, with nothing to rename or delete
                 val books = all.count { !it.deleted && it.isBook }
                 if (books > 0) item(key = "books") { FolderRow(stringResource(R.string.books), books) { nav.push(Screen.Folder(NotesStore.BOOKS_FOLDER)) } }
+                // the tags, once there is one: a row like a folder's, with # for a sign
+                if (tags > 0) item(key = "tags") { FolderRow(stringResource(R.string.tags), tags, hash = true) { nav.push(Screen.Tags) } }
                 item(key = "+") { FolderRow(stringResource(R.string.new_folder), null, dashed = true) { creating = true } }
             }
             Rule()
@@ -255,6 +342,7 @@ fun FoldersScreen(nav: Nav, app: App) {
             add(MenuItem(stringResource(R.string.new_note)) { nav.push(Screen.Edit(app.store.create())) })
             add(MenuItem(stringResource(R.string.new_folder)) { creating = true })
             add(MenuItem(stringResource(R.string.find)) { asking = true })
+            add(MenuItem(stringResource(R.string.tags)) { nav.push(Screen.Tags) })
             if (settings.configured) add(MenuItem(stringResource(R.string.sync_now)) { app.sync() })
         }, onDismiss = { menu = false }, footer = listOf(
             MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() },
@@ -279,11 +367,12 @@ fun FoldersScreen(nav: Nav, app: App) {
 }
 
 @Composable
-private fun FolderRow(name: String, count: Int?, filled: Boolean = false, dashed: Boolean = false, onLongPress: (() -> Unit)? = null, onClick: () -> Unit) {
+private fun FolderRow(name: String, count: Int?, filled: Boolean = false, dashed: Boolean = false, hash: Boolean = false, onLongPress: (() -> Unit)? = null, onClick: () -> Unit) {
     val colors = LocalColors.current
     Row(Modifier.fillMaxWidth().then(if (onLongPress != null) Modifier.pressable(onClick = onClick, onLongPress = onLongPress) else Modifier.noRippleClickable(onClick = onClick))
         .padding(horizontal = rowPadH, vertical = rowPadV * 0.75f), verticalAlignment = Alignment.CenterVertically) {
-        FolderGlyph(filled, dashed)
+        if (hash) Box(Modifier.size(width = 30.dp, height = 23.dp), contentAlignment = Alignment.Center) { T("#", size = LocalTypo.current.title, align = TextAlign.Center) }
+        else FolderGlyph(filled, dashed)
         T(name, Modifier.weight(1f).padding(start = 18.dp), size = LocalTypo.current.title, color = if (dashed) colors.dim else colors.fg, maxLines = 1)
         if (count != null) Small(count.toString(), maxLines = 1)
     }
@@ -331,6 +420,7 @@ fun EditScreen(nav: Nav, app: App, id: String) {
     // the cursor starts at the end: what is dictated into a note just opened goes after what it holds
     var value by remember { mutableStateOf(app.store.text(id).let { TextFieldValue(it, TextRange(it.length)) }) }
     var menu by remember { mutableStateOf(false) }
+    var tagging by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
     val empty = value.text.isEmpty()
     BackHandler { nav.pop() }
@@ -386,10 +476,13 @@ fun EditScreen(nav: Nav, app: App, id: String) {
             // note itself is a text field where a tap places the cursor
             addAll(linkItems(context, value.text))
             add(MenuItem(stringResource(R.string.share)) { share(context, value.text) })
+            add(MenuItem(stringResource(R.string.tag_menu)) { tagging = true })
             add(MenuItem(stringResource(R.string.delete)) { app.store.delete(id); nav.pop(); app.sync() })
         }, onDismiss = { menu = false }, footer = listOf(
             MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() }
         ))
+        // the tags change the text under the cursor's feet: the cursor stays where it was, within the new text
+        if (tagging) TagPicker(app, value.text, onText = { value = TextFieldValue(it, TextRange(value.selection.min.coerceAtMost(it.length))) }) { tagging = false }
     }
 }
 
