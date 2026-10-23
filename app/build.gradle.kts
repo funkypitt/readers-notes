@@ -13,8 +13,8 @@ android {
         applicationId = "com.freedomfighter.readersnotes"
         minSdk = 26
         targetSdk = 34
-        versionCode = 19
-        versionName = "1.12.1"
+        versionCode = 20
+        versionName = "1.13.0"
     }
 
     buildTypes { release { isMinifyEnabled = false } }
@@ -22,6 +22,8 @@ android {
     ndkVersion = "27.1.12297006"
     // Notes dictates and nothing else: the model that writes summaries stays out of the package.
     packaging { jniLibs { excludes += "**/libllama*.so" } }
+    // One voice dictates a note: the model that hears another speaker start stays out as well.
+    androidResources { ignoreAssetsPattern = "!pyannote-segmentation-3.0.bin:!pyannote-segmentation-3.0.bin.LICENSE" }
     buildFeatures { compose = true; buildConfig = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }

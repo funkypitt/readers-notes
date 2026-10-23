@@ -1,0 +1,1 @@
+A dictated note is cut into paragraphs the way the desktop apps do: at a pause of two seconds, at a shorter pause after a sentence, and at a sentence end once a paragraph runs long.
