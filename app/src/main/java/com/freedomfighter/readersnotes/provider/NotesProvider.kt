@@ -21,7 +21,7 @@ class NotesProvider : ContentProvider() {
         if (MATCHER.match(uri) != NOTES) throw IllegalArgumentException("unknown uri $uri")
         val store = app.store
         return MatrixCursor(arrayOf("_id", "id", "title", "preview", "modified")).apply {
-            store.live().forEachIndexed { i, n -> addRow(arrayOf(i, n.id, store.title(n.id), store.preview(n.id), n.modified)) }
+            store.live().forEachIndexed { i, n -> addRow(arrayOf(i, n.id, com.freedomfighter.readersnotes.data.Pictures.titleOr(context!!, store.text(n.id)), store.preview(n.id), n.modified)) }
         }
     }
 

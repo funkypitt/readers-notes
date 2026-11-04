@@ -40,6 +40,7 @@ class MainActivity : ComponentActivity() {
                     is Screen.Edit -> androidx.compose.runtime.key(s.id) { EditScreen(nav, app, s.id) }
                     Screen.Settings -> SettingsScreen(nav, app)
                     Screen.Tags -> com.freedomfighter.readersnotes.ui.TagsScreen(nav, app)
+                    is Screen.Draw -> androidx.compose.runtime.key(s) { com.freedomfighter.readersnotes.ui.DrawScreen(nav, app, s.picture) { name -> com.freedomfighter.readersnotes.ui.placeDrawing(nav, app, s, name) } }
                     is Screen.Tagged -> androidx.compose.runtime.key(s.tags) { NotesScreen(nav, app, inFolders = true, tags = s.tags) }
                 }
             }
@@ -70,8 +71,19 @@ class MainActivity : ComponentActivity() {
             nav.home()
             if (id == "new") nav.push(Screen.Edit(app.store.create()))
             else if (id == "dictate") nav.wantDictate = true
+            else if (id == "draw") nav.push(Screen.Draw())
             else if (id != null && app.store.get(id) != null) nav.push(Screen.Edit(id))
             intent.action = null; return
+        }
+        if (intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("image/") == true) {
+            @Suppress("DEPRECATION") val uri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM) ?: return
+            val name = com.freedomfighter.readersnotes.data.Pictures.importPhoto(this, uri)
+            intent.action = null
+            if (name == null) { android.widget.Toast.makeText(this, R.string.picture_unreadable, android.widget.Toast.LENGTH_SHORT).show(); return }
+            val words = intent.getStringExtra(Intent.EXTRA_TEXT)?.trim().orEmpty()
+            val id = (application as App).store.create((if (words.isEmpty()) "" else "$words\n") + com.freedomfighter.readersnotes.data.Pictures.line(name))
+            nav.home(); nav.push(Screen.Edit(id))
+            return
         }
         if (intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("text/") == true) {
             val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return

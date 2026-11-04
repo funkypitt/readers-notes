@@ -2,6 +2,12 @@ package com.freedomfighter.readersnotes.ui
 
 import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.focus.onFocusChanged
+import com.freedomfighter.readersnotes.data.Pictures
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +15,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.CompositionLocalProvider
@@ -79,6 +89,8 @@ sealed class Screen {
     data object Tags : Screen()
     /** The notes carrying all of [tags]. */
     data class Tagged(val tags: List<String>) : Screen()
+    /** A sheet to draw on: for the note [noteId] (null: a new note, in [folder]); [picture] the drawing drawn on again. */
+    data class Draw(val noteId: String? = null, val picture: String? = null, val folder: String = "") : Screen()
 }
 
 class Nav {
@@ -90,6 +102,10 @@ class Nav {
     var version by mutableIntStateOf(0)
     /** Asked from outside (the launcher): a new note, the microphone open. */
     var wantDictate by mutableStateOf(false)
+    /** The cursor of a note left for a drawing (note id, place in its text): it comes back there. */
+    var cursor: Pair<String, Int>? = null
+    /** The note left for a drawing: kept even while empty. */
+    var drawing: String? = null
 }
 
 fun whenLabel(millis: Long, yesterday: String): String {
@@ -121,7 +137,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
     val notes = remember(all, query, nav.version, folder, tags) {
         app.store.live().filter { n ->
             val text = app.store.text(n.id)
-            (folder == null || n.folder == folder) && (tags.isEmpty() || Tags.of(text).containsAll(tags)) && (query.isBlank() || text.contains(query, ignoreCase = true))
+            (folder == null || n.folder == folder) && (tags.isEmpty() || Tags.of(text).containsAll(tags)) && (query.isBlank() || Pictures.plain(text).contains(query, ignoreCase = true))
         }
     }
     // in a tagged list: the other tags carried by these notes, to narrow it further
@@ -150,7 +166,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
                     Small(if (query.isBlank()) stringResource(R.string.empty) else stringResource(R.string.nothing_found), Modifier.padding(horizontal = rowPadH, vertical = rowPadV))
                 }
                 items(notes, key = { it.id }) { n ->
-                    val title = app.store.title(n.id).ifBlank { stringResource(R.string.untitled) }
+                    val title = Pictures.titleOr(context, app.store.text(n.id))
                     val preview = dictationStatus(n.id) ?: app.store.preview(n.id)
                     // a note is a card with a colour theme, text on the page in the inks
                     Column(Modifier.fillMaxWidth().tileCard().pressable(onClick = { nav.push(Screen.Edit(n.id)) }, onLongPress = { noteMenu = n.id })
@@ -166,7 +182,13 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
             // The two ways into a note, one tap each: write it, or say it.
             if (!books) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                 Box(Modifier.weight(1f)) { Side(end = false) { TextRow(stringResource(R.string.new_note), size = typo.title) { newNote() } } }
-                Box(Modifier.weight(1f)) { Side(start = false) { DictateRow { app.store.create(folder = here).also { nav.push(Screen.Edit(it)) } } } }
+                Box(Modifier.width(IntrinsicSize.Max)) { Side(start = false, end = false) { DictateRow { app.store.create(folder = here).also { nav.push(Screen.Edit(it)) } } } }
+                // the third way, to draw it: the pencil alone, so that the two words keep their room
+                Box(Modifier.width(50.dp)) { Side(start = false) {
+                    Box(Modifier.fillMaxWidth().tileCard().noRippleClickable { nav.push(Screen.Draw(folder = here)) }.padding(vertical = rowPadV * 0.7f), contentAlignment = Alignment.Center) {
+                        T("✎", size = typo.title, maxLines = 1)
+                    }
+                } }
             }
             if (live.message.isNotEmpty()) Small(live.message, Modifier.padding(horizontal = rowPadH).padding(bottom = 6.dp), maxLines = 2)
             if (status.isNotEmpty() || !settings.configured) {
@@ -176,6 +198,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
         }
         if (menu) TextMenu(null, buildList {
             if (!books) add(MenuItem(stringResource(R.string.new_note)) { newNote() })
+            if (!books) add(MenuItem(stringResource(R.string.new_drawing)) { nav.push(Screen.Draw(folder = here)) })
             add(MenuItem(stringResource(R.string.find)) { asking = true })
             if (tags.isEmpty()) add(MenuItem(stringResource(R.string.tags)) { nav.push(Screen.Tags) })
             else if (narrower.isNotEmpty()) add(MenuItem(stringResource(R.string.narrow_tag)) { narrowing = true })
@@ -186,9 +209,9 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
         ))
         noteMenu?.let { id ->
             val book = app.store.get(id)?.isBook == true   // nothing that changes it
-            TextMenu(app.store.title(id).ifBlank { stringResource(R.string.untitled) }, buildList {
+            TextMenu(Pictures.titleOr(context, app.store.text(id)), buildList {
                 addAll(linkItems(context, app.store.text(id)))
-                add(MenuItem(stringResource(R.string.share)) { share(context, app.store.text(id)) })
+                add(MenuItem(stringResource(R.string.share)) { share(context, app, app.store.text(id)) })
                 if (book) return@buildList
                 add(MenuItem(stringResource(R.string.tag_menu)) { tagging = id })
                 if (settings.useFolders) add(MenuItem(stringResource(R.string.move_to_folder)) { moving = id })
@@ -398,7 +421,7 @@ fun linkItems(context: android.content.Context, text: String): List<MenuItem> {
     val write = stringResource(R.string.link_write)
     val open = stringResource(R.string.link_open)
     val noApp = stringResource(R.string.no_app_for_this)
-    return findLinks(text).map { link ->
+    return findLinks(Pictures.plain(text)).map { link ->
         val verb = when {
             link.uri.startsWith("tel:") -> call
             link.uri.startsWith("mailto:") -> write
@@ -410,8 +433,16 @@ fun linkItems(context: android.content.Context, text: String): List<MenuItem> {
     }
 }
 
-fun share(context: android.content.Context, text: String) {
-    val i = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text).putExtra(Intent.EXTRA_SUBJECT, NotesStore.titleOf(text))
+/** The note's text, without its picture lines; its pictures go along as files. */
+fun share(context: android.content.Context, app: App, text: String) {
+    val plain = Pictures.plain(text).trim()
+    val uris = Pictures.of(text).map { Pictures.file(app.store.filesDir, it) }.filter { it.exists() }
+        .map { androidx.core.content.FileProvider.getUriForFile(context, context.packageName + ".credentials", it) }
+    val i = if (uris.isEmpty()) Intent(Intent.ACTION_SEND).setType("text/plain")
+        else if (uris.size == 1) Intent(Intent.ACTION_SEND).setType("image/*").putExtra(Intent.EXTRA_STREAM, uris[0])
+        else Intent(Intent.ACTION_SEND_MULTIPLE).setType("image/*").putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+    if (plain.isNotEmpty()) i.putExtra(Intent.EXTRA_TEXT, plain).putExtra(Intent.EXTRA_SUBJECT, NotesStore.titleOf(text))
+    if (uris.isNotEmpty()) i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     context.startActivity(Intent.createChooser(i, null))
 }
 
@@ -427,28 +458,38 @@ fun EditScreen(nav: Nav, app: App, id: String) {
     val typo = LocalTypo.current
     val colors = LocalColors.current
     val settings by app.prefs.settings.collectAsState()
-    // the cursor starts at the end: what is dictated into a note just opened goes after what it holds
-    var value by remember { mutableStateOf(app.store.text(id).let { TextFieldValue(it, TextRange(it.length)) }) }
+    // the cursor starts at the end (what is dictated into a note just opened goes after what it
+    // holds), or where it was before a drawing was made in the note
+    val body = remember { Body(app.store.text(id), nav.cursor?.takeIf { it.first == id }?.second ?: Int.MAX_VALUE).also { nav.cursor = null } }
+    val text by remember { derivedStateOf { body.text() } }
     var menu by remember { mutableStateOf(false) }
     var tagging by remember { mutableStateOf(false) }
-    val focus = remember { FocusRequester() }
-    val empty = value.text.isEmpty()
+    var picMenu by remember { mutableStateOf<Int?>(null) }
+    val empty = text.isEmpty()
     BackHandler { nav.pop() }
     val live = DictateService.Live
+    fun focusAt() { (body.parts.getOrNull(body.at) as? Body.Words)?.focus?.let { runCatching { it.requestFocus() } } }
     // opened by « dictate »: the keyboard stays down, the page is for what is being said
-    LaunchedEffect(Unit) { if (empty && !(live.recording && live.noteId == id)) focus.requestFocus() }
-    LaunchedEffect(value.text) { app.store.save(id, value.text) }
+    LaunchedEffect(Unit) { if (empty && !(live.recording && live.noteId == id)) focusAt() }
+    LaunchedEffect(text) { app.store.save(id, text) }
     // What was dictated arrives at the cursor, a space or nothing before it as the text around asks.
     LaunchedEffect(live.arrived) {
         val a = live.arrived ?: return@LaunchedEffect
         if (a.noteId != id) return@LaunchedEffect
         live.arrived = null
-        val before = value.text.substring(0, value.selection.min)
-        val after = value.text.substring(value.selection.max)
-        val lead = if (before.isEmpty() || before.last().isWhitespace()) "" else " "
-        val trail = if (after.isEmpty() || after.first().isWhitespace()) "" else " "
-        val inserted = before + lead + a.text + trail
-        value = TextFieldValue(inserted + after, TextRange(inserted.length))
+        body.insertWords(a.text)
+    }
+    val unreadable = stringResource(R.string.picture_unreadable)
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val name = Pictures.importPhoto(context, uri)
+        if (name == null) android.widget.Toast.makeText(context, unreadable, android.widget.Toast.LENGTH_SHORT).show()
+        else { body.insertLine(Pictures.line(name)); focusAt() }
+    }
+    fun draw(picture: String? = null) {
+        nav.cursor = id to body.cursor()
+        nav.drawing = id
+        nav.push(Screen.Draw(noteId = id, picture = picture))
     }
     DisposableEffect(Unit) {
         live.editing = id
@@ -456,43 +497,75 @@ fun EditScreen(nav: Nav, app: App, id: String) {
             live.editing = ""
             // words that arrived as the page was closing still belong to the note
             live.arrived?.takeIf { it.noteId == id }?.let { live.arrived = null; DictateService.append(app, id, it.text) }
-            // an empty note is not worth keeping — unless its words are still on their way; a written one goes to the server
-            if (app.store.text(id).isBlank()) { if (!DictateService.pendingFor(context, id)) app.store.delete(id) }
+            // an empty note is not worth keeping — unless its words are still on their way, or a drawing is being made for it; a written one goes to the server
+            if (nav.drawing == id) Unit
+            else if (app.store.text(id).isBlank()) { if (!DictateService.pendingFor(context, id)) app.store.delete(id) }
             else if (settings.configured) app.sync()
         }
     }
-    val title = NotesStore.titleOf(value.text)
+    LaunchedEffect(Unit) { if (nav.drawing == id) nav.drawing = null }
+    val title = NotesStore.titleOf(text).ifBlank { if (Pictures.of(text).isEmpty()) stringResource(R.string.new_note_title) else Pictures.titleOr(context, text) }
     Page {
         Column(Modifier.fillMaxSize().imePadding()) {
-            ScreenTitle(title.ifBlank { stringResource(R.string.new_note_title) }, onBack = { nav.pop() }, trailing = "⋯", onTrailing = { menu = true })
-            Box(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).noRippleClickable { focus.requestFocus() }) {
-                BasicTextField(
-                    value = value,
-                    onValueChange = { value = it },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = rowPadH, vertical = 14.dp).focusRequester(focus),
-                    textStyle = TextStyle(color = colors.fg, fontFamily = typo.family, fontWeight = typo.weight, fontSize = typo.title, lineHeight = typo.title * 1.45f),
-                    cursorBrush = SolidColor(colors.fg),
-                    decorationBox = { inner ->
-                        Box { if (empty) T(stringResource(if (live.recording && live.noteId == id) R.string.speak_here else R.string.write_here), size = typo.title, color = colors.dim, align = TextAlign.Start); inner() }
+            ScreenTitle(title, onBack = { nav.pop() }, trailing = "⋯", onTrailing = { menu = true })
+            val style = TextStyle(color = colors.fg, fontFamily = typo.family, fontWeight = typo.weight, fontSize = typo.title, lineHeight = typo.title * 1.45f)
+            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).noRippleClickable {
+                // a tap below the text: the end of the last stretch
+                body.at = body.parts.indices.last { body.parts[it] is Body.Words }
+                (body.parts[body.at] as Body.Words).let { it.value = it.value.copy(selection = TextRange(it.value.text.length)) }
+                focusAt()
+            }) {
+                val lonely = body.parts.size == 1
+                body.parts.forEachIndexed { i, part ->
+                    when (part) {
+                        is Body.Words -> BasicTextField(
+                            value = part.value,
+                            onValueChange = { part.value = it },
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = rowPadH, vertical = if (lonely) 14.dp else 4.dp)
+                                // a line to write on, even empty, above and below each picture
+                                .defaultMinSize(minHeight = with(LocalDensity.current) { (typo.title * 1.45f).toDp() }).focusRequester(part.focus)
+                                .onFocusChanged { if (it.isFocused) body.at = i },
+                            textStyle = style,
+                            cursorBrush = SolidColor(colors.fg),
+                            decorationBox = { inner ->
+                                Box { if (empty && lonely) T(stringResource(if (live.recording && live.noteId == id) R.string.speak_here else R.string.write_here), size = typo.title, color = colors.dim, align = TextAlign.Start); inner() }
+                            }
+                        )
+                        is Body.Pic -> PictureView(app, part.name) { picMenu = i }
                     }
-                )
+                }
+                Spacer(Modifier.height(24.dp))
             }
             Rule()
-            DictateRow(secondary = dictationStatus(id) ?: live.message.ifEmpty { null }) { id }
+            // the ways into the note, one tap each: say it, draw it
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+                Box(Modifier.weight(1f)) { Side(end = false) { DictateRow(secondary = dictationStatus(id) ?: live.message.ifEmpty { null }) { id } } }
+                Box(Modifier.weight(1f)) { Side(start = false) { TextRow(stringResource(R.string.draw), size = typo.title) { draw() } } }
+            }
             Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
         }
         if (menu) TextMenu(null, buildList {
             // a number, a mail or a web address written in the note: opened from here, because the
             // note itself is a text field where a tap places the cursor
-            addAll(linkItems(context, value.text))
-            add(MenuItem(stringResource(R.string.share)) { share(context, value.text) })
+            addAll(linkItems(context, text))
+            add(MenuItem(stringResource(R.string.insert_picture)) { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) })
+            add(MenuItem(stringResource(R.string.insert_drawing)) { draw() })
+            add(MenuItem(stringResource(R.string.share)) { share(context, app, text) })
             add(MenuItem(stringResource(R.string.tag_menu)) { tagging = true })
             add(MenuItem(stringResource(R.string.delete)) { app.store.delete(id); nav.pop(); app.sync() })
         }, onDismiss = { menu = false }, footer = listOf(
             MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() }
         ))
+        picMenu?.let { i ->
+            val pic = body.parts.getOrNull(i) as? Body.Pic
+            if (pic == null) picMenu = null
+            else TextMenu(null, buildList {
+                if (Pictures.isDrawing(pic.name)) add(MenuItem(stringResource(R.string.draw_on_it)) { draw(pic.name) })
+                add(MenuItem(stringResource(R.string.remove_picture)) { body.remove(i) })
+            }, onDismiss = { picMenu = null })
+        }
         // the tags change the text under the cursor's feet: the cursor stays where it was, within the new text
-        if (tagging) TagPicker(app, value.text, onText = { value = TextFieldValue(it, TextRange(value.selection.min.coerceAtMost(it.length))) }) { tagging = false }
+        if (tagging) TagPicker(app, text, onText = { body.set(it, body.cursor().coerceAtMost(it.length)) }) { tagging = false }
     }
 }
 
@@ -526,7 +599,7 @@ fun ReadScreen(nav: Nav, app: App, id: String) {
         }
         if (menu) TextMenu(null, buildList {
             addAll(linkItems(context, text))
-            add(MenuItem(stringResource(R.string.share)) { share(context, text) })
+            add(MenuItem(stringResource(R.string.share)) { share(context, app, text) })
         }, onDismiss = { menu = false }, footer = listOf(
             MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() }
         ))

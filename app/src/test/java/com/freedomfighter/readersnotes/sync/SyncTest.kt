@@ -30,7 +30,8 @@ private class FakeDav : Dav {
         if (folderUrl !in dirs) throw WebDavException("PROPFIND: HTTP 404")
         fun name(url: String) = URLDecoder.decode(url.removePrefix(folderUrl).trimEnd('/'), "UTF-8")
         return files.filter { it.key.startsWith(folderUrl) && '/' !in it.key.removePrefix(folderUrl) }.map { RemoteFile(name(it.key), it.value.second, 0, false) } +
-            dirs.filter { it != folderUrl && it.startsWith(folderUrl) && '/' !in it.removePrefix(folderUrl).trimEnd('/') }.map { RemoteFile(name(it), null, 0, true) }
+            dirs.filter { it != folderUrl && it.startsWith(folderUrl) && '/' !in it.removePrefix(folderUrl).trimEnd('/') }.map { RemoteFile(name(it), null, 0, true) } +
+            bin.filter { it.key.startsWith(folderUrl) && '/' !in it.key.removePrefix(folderUrl) }.map { RemoteFile(name(it.key), "b", it.value.second, false) }
     }
     override fun get(url: String): String = files[url]?.first ?: throw WebDavException("GET: HTTP 404")
     override fun getOrNull(url: String): String? = files[url]?.first
@@ -38,11 +39,19 @@ private class FakeDav : Dav {
     val changed = ArrayList<String>()
     override fun put(url: String, text: String, ifMatch: String?): String? { changed += url; file(url, text); return files[url]!!.second }
     override fun etagOf(url: String): String? = files[url]?.second
-    override fun delete(url: String) { changed += url; remove(url) }
+    override fun delete(url: String) { changed += url; remove(url); bin.remove(url) }
     override fun mkcol(url: String) { changed += url; dirs += url }
     /** A file or a folder taken away by someone else. */
     fun remove(url: String) { files.remove(url); if (dirs.remove(url)) files.keys.removeAll { it.startsWith(url) } }
     override fun exists(url: String): Boolean { reach(url); return url in dirs || url in files }
+    /** Pictures: bytes and their last-modified time. */
+    val bin = HashMap<String, Pair<ByteArray, Long>>()
+    var clock = System.currentTimeMillis()
+    override fun getBytes(url: String): ByteArray? = bin[url]?.first
+    override fun putBytes(url: String, bytes: ByteArray, contentType: String) {
+        if (url.substringBeforeLast('/') + "/" !in dirs) throw WebDavException("PUT: HTTP 409")
+        changed += url; bin[url] = bytes to clock
+    }
 }
 
 class SyncTest {
@@ -320,5 +329,80 @@ class SyncTest {
         assertEquals(setOf("written here.txt", "Paper Boats.txt", "Reader's Books/The Glass Orchard.txt", "Reader's Books/Slow Rivers.txt", "Reader's Books/Paper Boats.txt"), dav.names(a.folderUrl))
         assertEquals(emptyList<String>(), store.folders().map { it.name })
         nothingAskedOfTheBooksFolder()
+    }
+
+    // ---- pictures (docs/PICTURES.md) ----------------------------------------------------
+
+    private val pics = "https://a.example/Notes/.pictures/"
+    private fun NotesStore.picture(name: String, bytes: ByteArray = name.toByteArray()) = com.freedomfighter.readersnotes.data.Pictures.write(filesDir, name, bytes)
+    private fun NotesStore.hasPicture(name: String) = com.freedomfighter.readersnotes.data.Pictures.file(filesDir, name).exists()
+    private val line = { n: String -> com.freedomfighter.readersnotes.data.Pictures.line(n) }
+
+    @Test fun aDrawingGoesUpAndComesDownOnAnotherDevice() {
+        val one = store(); val two = store()
+        val n = "drawing-20261104-093012-a3f9.png"
+        one.picture(n, byteArrayOf(1, 2, 3)); one.write("Plan\n" + line(n))
+        sync(one, a)
+        assertTrue(pics in dav.dirs)
+        assertEquals(listOf<Byte>(1, 2, 3), dav.bin[pics + n]!!.first.toList())
+        sync(two, a)
+        assertTrue(two.hasPicture(n))
+        assertEquals(listOf<Byte>(1, 2, 3), com.freedomfighter.readersnotes.data.Pictures.file(two.filesDir, n).readBytes().toList())
+        // nothing more to do on either side
+        dav.changed.clear(); sync(one, a); sync(two, a)
+        assertTrue(dav.changed.isEmpty())
+    }
+
+    @Test fun aPictureNotSentYetIsAskedForAgainLater() {
+        val one = store(); val two = store()
+        val n = "picture-20261104-093012-0000.jpg"
+        two.write("x\n" + line(n)); dav.mkcol("https://a.example/Notes/"); dav.mkcol(pics)
+        sync(two, a)   // the note is there, its picture not yet
+        assertFalse(two.hasPicture(n))
+        dav.bin[pics + n] = byteArrayOf(9) to dav.clock
+        sync(two, a)
+        assertTrue(two.hasPicture(n))
+    }
+
+    @Test fun aPictureNoNoteHoldsLeavesTheServerOnlyWhenOld() {
+        val one = store()
+        val kept = "drawing-20261104-093012-aaaa.png"; val old = "drawing-20261001-093012-bbbb.png"; val fresh = "drawing-20261104-093012-cccc.png"
+        one.picture(kept); one.write("k\n" + line(kept))
+        sync(one, a)
+        dav.bin[pics + old] = byteArrayOf(1) to dav.clock - 3L * 24 * 3600 * 1000
+        dav.bin[pics + fresh] = byteArrayOf(1) to dav.clock - 3600 * 1000
+        sync(one, a)
+        assertTrue(pics + kept in dav.bin); assertTrue(pics + fresh in dav.bin); assertFalse(pics + old in dav.bin)
+    }
+
+    @Test fun aDeviceThatStillHoldsAPictureSendsItAgain() {
+        val one = store()
+        val n = "drawing-20261104-093012-dddd.png"
+        one.picture(n); one.write("k\n" + line(n))
+        sync(one, a)
+        dav.bin.remove(pics + n)   // removed by another device, as unreferenced there
+        sync(one, a)
+        assertTrue(pics + n in dav.bin)
+    }
+
+    @Test fun localPicturesNoNoteHoldsGoWhenOld() {
+        val one = store()
+        val n = "drawing-20261104-093012-eeee.png"; val m = "drawing-20261104-093012-ffff.png"
+        one.picture(n); one.picture(m)
+        com.freedomfighter.readersnotes.data.Pictures.file(one.filesDir, n).setLastModified(System.currentTimeMillis() - 3L * 24 * 3600 * 1000)
+        one.write("only text")
+        sync(one, a)
+        assertFalse(one.hasPicture(n)); assertTrue(one.hasPicture(m))
+    }
+
+    @Test fun pictureLinesAreNotTheTitle() {
+        val n = "drawing-20261104-093012-a3f9.png"
+        assertEquals("Plan", NotesStore.titleOf(line(n) + "\n\nPlan\nmore"))
+        assertEquals("", NotesStore.titleOf(line(n)))
+        assertEquals("untitled.txt", NotesStore.fileNameOf(line(n)))
+        assertEquals(listOf(n), com.freedomfighter.readersnotes.data.Pictures.of("a\n  " + line(n) + "  \nb\n" + line(n)))
+        assertTrue(com.freedomfighter.readersnotes.data.Pictures.of("![](.pictures/../x.png)\n![](pictures/x.png)\ntext ![](.pictures/x.png)").isEmpty())
+        assertEquals("a\nb", com.freedomfighter.readersnotes.data.Pictures.plain("a\n" + line(n) + "\nb"))
+        assertEquals(listOf("x.JPG"), com.freedomfighter.readersnotes.data.Pictures.of("![alt](.pictures/x.JPG)"))
     }
 }

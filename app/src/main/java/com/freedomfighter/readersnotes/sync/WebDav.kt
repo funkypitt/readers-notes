@@ -28,13 +28,16 @@ interface Dav {
     fun delete(url: String)
     fun mkcol(url: String)
     fun exists(url: String): Boolean
+    /** A picture's bytes; null when it is not there. */
+    fun getBytes(url: String): ByteArray?
+    fun putBytes(url: String, bytes: ByteArray, contentType: String)
 }
 
 /** The five WebDAV requests a notes folder needs: PROPFIND, GET, PUT, DELETE, MKCOL. */
 class WebDav(private val username: String, private val password: String) : Dav {
     private val auth = "Basic " + Base64.encodeToString("$username:$password".toByteArray(), Base64.NO_WRAP)
 
-    private class Resp(val code: Int, val body: String, val headers: Map<String, List<String>>)
+    private class Resp(val code: Int, val bytes: ByteArray, val headers: Map<String, List<String>>) { val body: String get() = bytes.toString(Charsets.UTF_8) }
 
     private fun request(method: String, url: String, body: ByteArray? = null, depth: Int? = null, headers: Map<String, String> = emptyMap(), contentType: String = "text/plain; charset=utf-8", allow: Set<Int> = emptySet()): Resp {
         val c = URL(url).openConnection() as HttpURLConnection
@@ -48,7 +51,7 @@ class WebDav(private val username: String, private val password: String) : Dav {
         try {
             if (body != null) c.outputStream.use { it.write(body) }
             val code = c.responseCode
-            val text = (if (code in 200..299) c.inputStream else c.errorStream)?.readBytes()?.toString(Charsets.UTF_8) ?: ""
+            val text = (if (code in 200..299) c.inputStream else c.errorStream)?.readBytes() ?: ByteArray(0)
             if (code == 401) throw WebDavAuthException()
             if (code >= 400 && code !in allow) throw WebDavException("$method: HTTP $code")
             return Resp(code, text, c.headerFields)
@@ -93,6 +96,9 @@ class WebDav(private val username: String, private val password: String) : Dav {
         val r = request("PROPFIND", url, "<?xml version=\"1.0\"?><d:propfind xmlns:d=\"DAV:\"><d:prop><d:getetag/></d:prop></d:propfind>".toByteArray(), depth = 0, contentType = "application/xml; charset=utf-8")
         return parse(r.body).firstOrNull()?.etag?.trim()?.removeSurrounding("\"")
     }
+
+    override fun getBytes(url: String): ByteArray? = request("GET", url, allow = setOf(404)).let { if (it.code == 404) null else it.bytes }
+    override fun putBytes(url: String, bytes: ByteArray, contentType: String) { request("PUT", url, bytes, contentType = contentType) }
 
     override fun delete(url: String) { request("DELETE", url, allow = setOf(404)) }
     override fun mkcol(url: String) { request("MKCOL", url, allow = setOf(405, 301)) }

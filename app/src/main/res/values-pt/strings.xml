@@ -113,4 +113,17 @@
     <string name="no_tags">ainda nenhuma etiqueta. Uma etiqueta é uma palavra precedida de #, escrita em qualquer parte de uma nota: #trabalho. O menu de uma nota adiciona-as ou retira-as.</string>
     <string name="narrow_tag">também com uma etiqueta…</string>
     <string name="done">concluído</string>
+    <!-- pictures and drawings -->
+    <string name="drawing">desenho</string>
+    <string name="picture">imagem</string>
+    <string name="draw">✎ desenhar</string>
+    <string name="insert_picture">inserir uma imagem</string>
+    <string name="insert_drawing">inserir um desenho</string>
+    <string name="draw_on_it">desenhar por cima</string>
+    <string name="remove_picture">remover da nota</string>
+    <string name="picture_missing">imagem a caminho</string>
+    <string name="picture_unreadable">esta imagem não pode ser lida</string>
+    <string name="pen">caneta</string>
+    <string name="eraser">borracha</string>
+    <string name="new_drawing">novo desenho</string>
 </resources>

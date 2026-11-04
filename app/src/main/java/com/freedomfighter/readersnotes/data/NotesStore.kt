@@ -93,7 +93,13 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
 
     fun title(id: String): String = titleOf(text(id))
     /** The second line of the note, tag lines left aside (they show in their own place). */
-    fun preview(id: String): String = text(id).lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.drop(1).firstOrNull { !Tags.isTagLine(it) } ?: ""
+    fun preview(id: String): String = text(id).lineSequence().map { it.trim() }.filter { it.isNotEmpty() && !Pictures.isLine(it) }.drop(1).firstOrNull { !Tags.isTagLine(it) } ?: ""
+    /** The pictures' files here (see [Pictures]). */
+    val filesDir: File = filesDir
+    /** Raised when pictures came from the server: the pages showing them look again. */
+    val pictureTick = MutableStateFlow(0)
+    /** Every picture a note here holds. */
+    fun pictureNames(): Set<String> = all().filter { !it.deleted }.flatMap { Pictures.of(text(it.id)) }.toSet()
     fun tags(id: String): List<String> = Tags.of(text(id))
     /** Every tag of the live notes with its count, most used first. */
     fun tagCounts(): List<Pair<String, Int>> = Tags.count(live().asSequence().map { text(it.id) })
@@ -212,7 +218,8 @@ class NotesStore(filesDir: File, private val changed: () -> Unit = {}) {
             val resolver = appContext.contentResolver
             return { resolver.notifyChange(changeUri, null); runCatching { com.freedomfighter.readersnotes.widget.NotesWidgets.refresh(appContext) } }
         }
-        fun titleOf(text: String): String = text.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() }?.take(80) ?: ""
+        /** The first line of text; a picture's line is not one. */
+        fun titleOf(text: String): String = text.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() && !Pictures.isLine(it) }?.take(80) ?: ""
         /** A folder name the server and a desktop will both accept; null when nothing is left. */
         fun folderNameOf(name: String): String? =
             name.replace(Regex("[\\\\/:*?\"<>|\\p{Cntrl}]"), " ").replace(Regex("\\s+"), " ").trim().trimEnd('.').trimStart('.').takeIf { it.isNotEmpty() }?.take(60)

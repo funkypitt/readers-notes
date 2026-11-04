@@ -113,4 +113,17 @@
     <string name="no_tags">noch kein Tag. Ein Tag ist ein Wort mit # davor, irgendwo in einer Notiz geschrieben: #arbeit. Das Menü einer Notiz fügt Tags hinzu oder entfernt sie.</string>
     <string name="narrow_tag">auch mit einem Tag…</string>
     <string name="done">fertig</string>
+    <!-- pictures and drawings -->
+    <string name="drawing">Zeichnung</string>
+    <string name="picture">Bild</string>
+    <string name="draw">✎ zeichnen</string>
+    <string name="insert_picture">Bild einfügen</string>
+    <string name="insert_drawing">Zeichnung einfügen</string>
+    <string name="draw_on_it">darauf zeichnen</string>
+    <string name="remove_picture">aus der Notiz entfernen</string>
+    <string name="picture_missing">Bild unterwegs</string>
+    <string name="picture_unreadable">dieses Bild kann nicht gelesen werden</string>
+    <string name="pen">Stift</string>
+    <string name="eraser">Radierer</string>
+    <string name="new_drawing">neue Zeichnung</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.freedomfighter.readersnotes.sync
 
 import com.freedomfighter.readersnotes.data.NotesStore
+import com.freedomfighter.readersnotes.data.Pictures
 import com.freedomfighter.readersnotes.data.Settings
 import com.freedomfighter.readersnotes.data.encodeSegment
 
@@ -153,6 +154,43 @@ object Sync {
             if (g in serverDirs && dav.list(dirUrl(g)).none { !it.isDir }) dav.delete(dirUrl(g))
             store.folderRemovedThere(g)
         }
-        return Result(up, down, del)
+        // The pictures, once the notes say which are wanted; a failure here waits for the next run.
+        val p = runCatching { pictures(store, dav, root, entries.any { it.isDir && it.name == Pictures.FOLDER }) }.getOrDefault(0 to 0)
+        return Result(up + p.first, down + p.second, del)
+    }
+
+    /**
+     * docs/PICTURES.md: every picture a note here holds goes up when the server lacks it, comes
+     * down when this phone lacks it (not there yet: next time); a file there that no note holds
+     * and that is older than [Pictures.KEEP_MS] is removed — a device that still needs it sends it
+     * again. Returns (sent, fetched).
+     */
+    fun pictures(store: NotesStore, dav: Dav, root: String, onServer: Boolean, now: Long = System.currentTimeMillis()): Pair<Int, Int> {
+        val refs = store.pictureNames()
+        val dir = store.filesDir
+        if (refs.isEmpty() && !onServer) { Pictures.cleanUp(dir, refs, now); return 0 to 0 }
+        val folderUrl = root + Pictures.FOLDER + "/"
+        val there = if (onServer) dav.list(folderUrl).filter { !it.isDir }.associateBy { it.name } else emptyMap()
+        var made = onServer
+        var sent = 0; var fetched = 0
+        for (name in refs) {
+            val f = Pictures.file(dir, name)
+            if (f.exists()) {
+                if (name in there) continue
+                runCatching {
+                    if (!made) { dav.mkcol(folderUrl); made = true }
+                    dav.putBytes(folderUrl + encodeSegment(name), f.readBytes(), Pictures.mimeOf(name)); sent++
+                }
+            } else if (name in there) {
+                runCatching { dav.getBytes(folderUrl + encodeSegment(name))?.let { Pictures.write(dir, name, it); fetched++ } }
+            }
+        }
+        for ((name, r) in there) {
+            if (name in refs || r.modified <= 0 || now - r.modified <= Pictures.KEEP_MS) continue
+            runCatching { dav.delete(folderUrl + encodeSegment(name)) }
+        }
+        Pictures.cleanUp(dir, refs, now)
+        if (fetched > 0) store.pictureTick.value++
+        return sent to fetched
     }
 }

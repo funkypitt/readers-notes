@@ -77,8 +77,8 @@ class NoteWidget : AppWidgetProvider() {
                 views.setOnClickPendingIntent(R.id.widget_root, WidgetUi.activity(context, Intent(Intent.ACTION_MAIN).setClassName(context.packageName, "${context.packageName}.MainActivity"), widgetId))
             } else {
                 val text = store.text(note.id)
-                views.setTextViewText(R.id.widget_title, NotesStore.titleOf(text).ifBlank { context.getString(R.string.untitled) })
-                views.setTextViewText(R.id.widget_text, bodyOf(text))
+                views.setTextViewText(R.id.widget_title, com.freedomfighter.readersnotes.data.Pictures.titleOr(context, text))
+                views.setTextViewText(R.id.widget_text, bodyOf(com.freedomfighter.readersnotes.data.Pictures.plain(text)))
                 views.setOnClickPendingIntent(R.id.widget_root, WidgetUi.activity(context, NotesWidgets.open(note.id), widgetId))
             }
             mgr.updateAppWidget(widgetId, views)
@@ -125,7 +125,7 @@ class NoteWidgetConfigure : ComponentActivity() {
                         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 6.dp, bottom = 24.dp)) {
                             item(key = "+") { TextRow(stringResource(R.string.new_note), size = typo.title) { choose(app.store.create(), thenWrite = true) } }
                             items(notes, key = { it.id }) { n ->
-                                val title = app.store.title(n.id).ifBlank { stringResource(R.string.untitled) }
+                                val title = com.freedomfighter.readersnotes.data.Pictures.titleOr(androidx.compose.ui.platform.LocalContext.current, app.store.text(n.id))
                                 val preview = app.store.preview(n.id)
                                 val where = if (n.isBook) " · " + stringResource(R.string.books) else if (settings.useFolders && n.folder.isNotEmpty()) " · ${n.folder}" else ""
                                 Column(Modifier.fillMaxWidth().noRippleClickable { choose(n.id, thenWrite = false) }

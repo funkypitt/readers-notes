@@ -3,7 +3,7 @@
     <string name="app_title">заметки</string>
     <string name="action_ok">ок</string>
     <string name="action_cancel">отмена</string>
-    <string name="new_note">+ новая заметка</string>
+    <string name="new_note">+ заметка</string>
     <string name="new_note_title">новая заметка</string>
     <string name="untitled">без названия</string>
     <string name="write_here">пишите здесь. Первая строка — название.</string>
@@ -113,4 +113,17 @@
     <string name="no_tags">тегов пока нет. Тег — это слово с # впереди, написанное в любом месте заметки: #работа. Меню заметки добавляет и убирает теги.</string>
     <string name="narrow_tag">ещё с одним тегом…</string>
     <string name="done">готово</string>
+    <!-- pictures and drawings -->
+    <string name="drawing">рисунок</string>
+    <string name="picture">изображение</string>
+    <string name="draw">✎ рисовать</string>
+    <string name="insert_picture">вставить изображение</string>
+    <string name="insert_drawing">вставить рисунок</string>
+    <string name="draw_on_it">рисовать поверх</string>
+    <string name="remove_picture">убрать из заметки</string>
+    <string name="picture_missing">изображение загружается</string>
+    <string name="picture_unreadable">не удаётся прочитать изображение</string>
+    <string name="pen">перо</string>
+    <string name="eraser">ластик</string>
+    <string name="new_drawing">новый рисунок</string>
 </resources>

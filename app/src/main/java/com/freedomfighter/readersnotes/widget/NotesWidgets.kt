@@ -37,7 +37,7 @@ object NotesWidgets {
             views.setTextViewText(R.id.widget_title, context.getString(R.string.empty_short)); views.setTextViewText(R.id.widget_sub, context.getString(R.string.app_title))
             views.setOnClickPendingIntent(R.id.widget_body, WidgetUi.activity(context, open("new"), 1))
         } else {
-            views.setTextViewText(R.id.widget_title, store.title(first.id).ifBlank { context.getString(R.string.untitled) })
+            views.setTextViewText(R.id.widget_title, com.freedomfighter.readersnotes.data.Pictures.titleOr(context, store.text(first.id)))
             views.setTextViewText(R.id.widget_sub, sub(context, first))
             views.setOnClickPendingIntent(R.id.widget_body, WidgetUi.activity(context, open(first.id), 1))
         }
@@ -82,7 +82,7 @@ class ListService : RemoteViewsService() {
             val n = items[i]; val store = (applicationContext as App).store
             val v = RemoteViews(packageName, R.layout.widget_item)
             val (_, fg, dim) = WidgetUi.colors(applicationContext)
-            v.setTextViewText(R.id.item_title, store.title(n.id).ifBlank { getString(R.string.untitled) }); v.setTextColor(R.id.item_title, fg)
+            v.setTextViewText(R.id.item_title, com.freedomfighter.readersnotes.data.Pictures.titleOr(applicationContext, store.text(n.id))); v.setTextColor(R.id.item_title, fg)
             v.setTextViewText(R.id.item_sub, NotesWidgets.sub(applicationContext, n)); v.setTextColor(R.id.item_sub, dim)
             v.setOnClickFillInIntent(R.id.item_root, Intent().setData(Uri.parse("content://com.freedomfighter.readersnotes/notes/${n.id}")))
             return v

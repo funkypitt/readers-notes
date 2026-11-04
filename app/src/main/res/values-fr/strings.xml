@@ -113,4 +113,17 @@
     <string name="no_tags">pas encore de tag. Un tag est un mot précédé de #, écrit n\'importe où dans une note : #travail. Le menu d\'une note en ajoute ou en retire.</string>
     <string name="narrow_tag">aussi avec un tag…</string>
     <string name="done">terminé</string>
+    <!-- pictures and drawings -->
+    <string name="drawing">dessin</string>
+    <string name="picture">image</string>
+    <string name="draw">✎ dessiner</string>
+    <string name="insert_picture">insérer une image</string>
+    <string name="insert_drawing">insérer un dessin</string>
+    <string name="draw_on_it">dessiner dessus</string>
+    <string name="remove_picture">retirer de la note</string>
+    <string name="picture_missing">image en route</string>
+    <string name="picture_unreadable">cette image ne peut pas être lue</string>
+    <string name="pen">stylo</string>
+    <string name="eraser">gomme</string>
+    <string name="new_drawing">nouveau dessin</string>
 </resources>
