@@ -27,6 +27,9 @@ No formatting, no folders, no account. In the family of
 * Tags: a word with # in front, anywhere in a note (`#work`), is a tag. A note's menu adds or
   removes them; the **tags** page lists them with their counts, and shows the notes carrying one
   tag or several. Being plain text, tags travel with the note to the server and the desktop app.
+* Export as PDF: a note's ⋯ menu or long press › **export as PDF** makes A4 pages — its title,
+  its text and its pictures in place, page numbers at the foot — in black on white, saved where
+  you choose (`readers-notes-<title>.pdf`), then offered to the share menu.
 * Phone numbers, mail addresses and links in a note are offered in its ⋯ menu ("call …",
   "write to …", "open …"); the dialer never calls by itself.
 * The network is used for your WebDAV server and the model download only. Credentials export

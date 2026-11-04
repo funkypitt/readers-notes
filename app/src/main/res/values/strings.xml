@@ -123,6 +123,8 @@
     <string name="draw_on_it">draw on it</string>
     <string name="remove_picture">remove from the note</string>
     <string name="picture_missing">picture on its way</string>
+    <string name="export_pdf">export as PDF</string>
+    <string name="pdf_failed">the PDF could not be saved</string>
     <string name="picture_unreadable">this picture cannot be read</string>
     <string name="pen">pen</string>
     <string name="eraser">eraser</string>

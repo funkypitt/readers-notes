@@ -122,6 +122,8 @@
     <string name="draw_on_it">darauf zeichnen</string>
     <string name="remove_picture">aus der Notiz entfernen</string>
     <string name="picture_missing">Bild unterwegs</string>
+    <string name="export_pdf">als PDF exportieren</string>
+    <string name="pdf_failed">das PDF konnte nicht gespeichert werden</string>
     <string name="picture_unreadable">dieses Bild kann nicht gelesen werden</string>
     <string name="pen">Stift</string>
     <string name="eraser">Radierer</string>

@@ -122,6 +122,8 @@
     <string name="draw_on_it">рисовать поверх</string>
     <string name="remove_picture">убрать из заметки</string>
     <string name="picture_missing">изображение загружается</string>
+    <string name="export_pdf">экспорт в PDF</string>
+    <string name="pdf_failed">не удалось сохранить PDF</string>
     <string name="picture_unreadable">не удаётся прочитать изображение</string>
     <string name="pen">перо</string>
     <string name="eraser">ластик</string>

@@ -153,6 +153,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
     val live = DictateService.Live
     val dictateNew = rememberDictate { app.store.create(folder = here).also { nav.push(Screen.Edit(it)) } }
     LaunchedEffect(nav.wantDictate) { if (nav.wantDictate) { nav.wantDictate = false; if (!live.recording) dictateNew() } }
+    val pdf = rememberPdfExporter(app)
     Page {
         Column(Modifier.fillMaxSize()) {
             val place = when { tags.isNotEmpty() -> Tags.label(tags); !inFolders -> stringResource(R.string.app_title); folder == null -> stringResource(R.string.all_notes); books -> stringResource(R.string.books); else -> folder }
@@ -212,6 +213,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
             TextMenu(Pictures.titleOr(context, app.store.text(id)), buildList {
                 addAll(linkItems(context, app.store.text(id)))
                 add(MenuItem(stringResource(R.string.share)) { share(context, app, app.store.text(id)) })
+                add(MenuItem(stringResource(R.string.export_pdf)) { pdf.start(id) })
                 if (book) return@buildList
                 add(MenuItem(stringResource(R.string.tag_menu)) { tagging = id })
                 if (settings.useFolders) add(MenuItem(stringResource(R.string.move_to_folder)) { moving = id })
@@ -219,6 +221,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
             }, onDismiss = { noteMenu = null })
         }
         moving?.let { id -> MoveMenu(app, id) { moving = null } }
+        pdf.Sheet()
         tagging?.let { id -> TagPicker(app, app.store.text(id), onText = { app.store.save(id, it) }) { tagging = null; if (settings.configured) app.sync() } }
         if (narrowing) TextMenu(stringResource(R.string.narrow_tag), narrower.map { t -> MenuItem("#$t") { nav.push(Screen.Tagged(tags + t)) } }, onDismiss = { narrowing = false })
         if (asking) TextPrompt(stringResource(R.string.find), initial = query, confirm = stringResource(R.string.find), onDone = { query = it; asking = false }, onCancel = { asking = false })
@@ -509,6 +512,7 @@ fun EditScreen(nav: Nav, app: App, id: String) {
     }
     LaunchedEffect(Unit) { if (nav.drawing == id) nav.drawing = null }
     val title = NotesStore.titleOf(text).ifBlank { if (Pictures.of(text).isEmpty()) stringResource(R.string.new_note_title) else Pictures.titleOr(context, text) }
+    val pdf = rememberPdfExporter(app)
     Page {
         Column(Modifier.fillMaxSize().imePadding()) {
             ScreenTitle(title, onBack = { nav.pop() }, trailing = "⋯", onTrailing = { menu = true })
@@ -555,6 +559,7 @@ fun EditScreen(nav: Nav, app: App, id: String) {
             add(MenuItem(stringResource(R.string.insert_picture)) { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) })
             add(MenuItem(stringResource(R.string.insert_drawing)) { draw() })
             add(MenuItem(stringResource(R.string.share)) { share(context, app, text) })
+            add(MenuItem(stringResource(R.string.export_pdf)) { app.store.save(id, text); pdf.start(id) })
             add(MenuItem(stringResource(R.string.tag_menu)) { tagging = true })
             add(MenuItem(stringResource(R.string.delete)) { app.store.delete(id); nav.pop(); app.sync() })
         }, onDismiss = { menu = false }, footer = listOf(
@@ -568,6 +573,7 @@ fun EditScreen(nav: Nav, app: App, id: String) {
                 add(MenuItem(stringResource(R.string.remove_picture)) { body.remove(i) })
             }, onDismiss = { picMenu = null })
         }
+        pdf.Sheet()
         // the tags change the text under the cursor's feet: the cursor stays where it was, within the new text
         if (tagging) TagPicker(app, text, onText = { body.set(it, body.cursor().coerceAtMost(it.length)) }) { tagging = false }
     }
@@ -590,6 +596,7 @@ fun ReadScreen(nav: Nav, app: App, id: String) {
     BackHandler { nav.pop() }
     // removed on the server while it was open: back to the list
     LaunchedEffect(all) { if (all.none { it.id == id && !it.deleted }) nav.pop() }
+    val pdf = rememberPdfExporter(app)
     Page {
         Column(Modifier.fillMaxSize()) {
             ScreenTitle(NotesStore.titleOf(text).ifBlank { stringResource(R.string.untitled) }, onBack = { nav.pop() }, trailing = "⋯", onTrailing = { menu = true })
@@ -604,9 +611,11 @@ fun ReadScreen(nav: Nav, app: App, id: String) {
         if (menu) TextMenu(null, buildList {
             addAll(linkItems(context, text))
             add(MenuItem(stringResource(R.string.share)) { share(context, app, text) })
+            add(MenuItem(stringResource(R.string.export_pdf)) { pdf.start(id) })
         }, onDismiss = { menu = false }, footer = listOf(
             MenuItem(themeName(Palettes.next(settings.theme))) { app.prefs.nextTheme() }
         ))
+        pdf.Sheet()
     }
 }
 

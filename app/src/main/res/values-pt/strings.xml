@@ -122,6 +122,8 @@
     <string name="draw_on_it">desenhar por cima</string>
     <string name="remove_picture">remover da nota</string>
     <string name="picture_missing">imagem a caminho</string>
+    <string name="export_pdf">exportar como PDF</string>
+    <string name="pdf_failed">não foi possível guardar o PDF</string>
     <string name="picture_unreadable">esta imagem não pode ser lida</string>
     <string name="pen">caneta</string>
     <string name="eraser">borracha</string>
