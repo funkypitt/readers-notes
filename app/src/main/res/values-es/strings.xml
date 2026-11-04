@@ -126,4 +126,5 @@
     <string name="pen">lápiz</string>
     <string name="eraser">goma</string>
     <string name="new_drawing">nuevo dibujo</string>
+    <string name="link_recording">abrir la grabación</string>
 </resources>

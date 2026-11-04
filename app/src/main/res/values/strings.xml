@@ -127,4 +127,5 @@
     <string name="pen">pen</string>
     <string name="eraser">eraser</string>
     <string name="new_drawing">new drawing</string>
+    <string name="link_recording">open the recording</string>
 </resources>

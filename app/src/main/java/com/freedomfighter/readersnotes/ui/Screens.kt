@@ -421,7 +421,11 @@ fun linkItems(context: android.content.Context, text: String): List<MenuItem> {
     val write = stringResource(R.string.link_write)
     val open = stringResource(R.string.link_open)
     val noApp = stringResource(R.string.no_app_for_this)
+    val recording = stringResource(R.string.link_recording)
     return findLinks(Pictures.plain(text)).map { link ->
+        if (com.freedomfighter.readersnotes.data.isRecording(link.uri)) return@map MenuItem(recording) {
+            if (!openLink(context, link.uri)) android.widget.Toast.makeText(context, noApp, android.widget.Toast.LENGTH_SHORT).show()
+        }
         val verb = when {
             link.uri.startsWith("tel:") -> call
             link.uri.startsWith("mailto:") -> write

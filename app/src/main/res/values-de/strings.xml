@@ -126,4 +126,5 @@
     <string name="pen">Stift</string>
     <string name="eraser">Radierer</string>
     <string name="new_drawing">neue Zeichnung</string>
+    <string name="link_recording">die Aufnahme öffnen</string>
 </resources>

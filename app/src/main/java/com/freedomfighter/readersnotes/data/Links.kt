@@ -20,6 +20,9 @@ private const val MAX_PHONE_DIGITS = 15     // E.164
 private val EMAIL = Regex("""[A-Za-z0-9._%+\-]{1,64}@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)+""")
 private val WEB = Regex("""(?:https?://|www\.)[^\s<>"']+""", RegexOption.IGNORE_CASE)
 private val PHONE = Regex("""(?<![\w@])\(?\+?\d[\d  ()./\-]{4,}\d(?![\w])""")
+// A line written by Reader's Recorder's « make it a note »: it opens that recording again.
+private const val RECORDER = "com.freedomfighter.readersrecorder"
+private val RECORDING = Regex("""content://com\.freedomfighter\.readersrecorder/recordings/[A-Za-z0-9_\-]+""")
 private val DATE = Regex("""\d{1,4}[./\-]\d{1,2}[./\-]\d{2,4}""")
 
 /** The phone numbers, mail and web addresses of a text, in order, each one only once. */
@@ -31,6 +34,7 @@ fun findLinks(text: String, limit: Int = 8): List<Link> {
         taken.add(range)
         out.putIfAbsent(uri, Link(shown, uri))
     }
+    for (m in RECORDING.findAll(text)) add(m.range.first..m.range.last + 1, m.value, m.value)
     for (m in EMAIL.findAll(text)) add(m.range.first..m.range.last + 1, m.value, "mailto:" + m.value)
     for (m in WEB.findAll(text)) {
         val value = m.value.trimEnd('.', ',', ';', ':', ')', '!', '?')
@@ -46,8 +50,12 @@ fun findLinks(text: String, limit: Int = 8): List<Link> {
     return out.values.sortedBy { text.indexOf(it.text) }.take(limit)
 }
 
+/** A link back to a recording in Reader's Recorder. */
+fun isRecording(uri: String): Boolean = uri.startsWith("content://$RECORDER/recordings/")
+
 /** The intent a link opens: the dialer keeps the number on screen, it is never called. */
 fun intentFor(uri: String): Intent = when {
+    isRecording(uri) -> Intent(Intent.ACTION_VIEW, Uri.parse(uri)).setClassName(RECORDER, "$RECORDER.MainActivity")
     uri.startsWith("tel:") -> Intent(Intent.ACTION_DIAL, Uri.parse(uri))
     uri.startsWith("mailto:") -> Intent(Intent.ACTION_SENDTO, Uri.parse(uri))
     else -> Intent(Intent.ACTION_VIEW, Uri.parse(uri))

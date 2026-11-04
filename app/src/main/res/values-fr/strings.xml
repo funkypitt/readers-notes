@@ -126,4 +126,5 @@
     <string name="pen">stylo</string>
     <string name="eraser">gomme</string>
     <string name="new_drawing">nouveau dessin</string>
+    <string name="link_recording">ouvrir l’enregistrement</string>
 </resources>

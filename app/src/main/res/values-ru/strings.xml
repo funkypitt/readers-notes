@@ -126,4 +126,5 @@
     <string name="pen">перо</string>
     <string name="eraser">ластик</string>
     <string name="new_drawing">новый рисунок</string>
+    <string name="link_recording">открыть запись</string>
 </resources>

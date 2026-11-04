@@ -126,4 +126,5 @@
     <string name="pen">caneta</string>
     <string name="eraser">borracha</string>
     <string name="new_drawing">novo desenho</string>
+    <string name="link_recording">abrir a gravação</string>
 </resources>

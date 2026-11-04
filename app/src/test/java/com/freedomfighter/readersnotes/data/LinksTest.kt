@@ -28,4 +28,12 @@ class LinksTest {
 
     @Test fun `what is shown is the text itself`() =
         assertEquals(listOf("+41 21 654 12 34"), findLinks("appeler +41 21 654 12 34 demain").map { it.text })
+
+    @Test fun `a line back to a recording`() {
+        val line = "content://com.freedomfighter.readersrecorder/recordings/0b6f1c2e-1234-5678-9abc-def012345678"
+        val links = findLinks("Réunion\n\nOn a parlé du budget, appeler 021 654 12 34.\n\n$line")
+        assertEquals(listOf("tel:0216541234", line), links.map { it.uri })
+        assertEquals(true, isRecording(links[1].uri))
+        assertEquals(false, isRecording(links[0].uri))
+    }
 }
