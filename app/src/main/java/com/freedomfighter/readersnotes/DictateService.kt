@@ -255,9 +255,28 @@ class DictateService : Service() {
 
     private fun goForeground(mic: Boolean) {
         val n = buildNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-            startForeground(NOTIF_ID, n, if (mic) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-        else startForeground(NOTIF_ID, n)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                startForeground(NOTIF_ID, n, if (mic) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            else startForeground(NOTIF_ID, n)
+        } catch (e: IllegalStateException) {
+            // Android 15+ (ForegroundServiceStartNotAllowedException): the microphone cannot be opened from
+            // the background, or the day's dataSync budget is spent. The sound already recorded stays in
+            // `files/dictation` and is written at the next opening; no crash.
+            Live.message = getString(R.string.dictate_stopped)
+            if (recorder != null) stop()
+        }
+    }
+
+    /** Android 15+: the dataSync budget (6 h per day) ran out while words were being written; the
+     *  service must go within seconds. The sound stays on the phone and is taken up at the next opening. */
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        if (recorder != null) stop()
+        scope.cancel()
+        working = false
+        runCatching { if (lock?.isHeld == true) lock?.release() }
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     private fun pushNotification() = (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIF_ID, buildNotification())
@@ -265,7 +284,7 @@ class DictateService : Service() {
     private fun buildNotification(): Notification {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, getString(R.string.dictation), NotificationManager.IMPORTANCE_LOW).apply { setSound(null, null); enableVibration(false) })
-        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java).setAction(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val b = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentIntent(open)

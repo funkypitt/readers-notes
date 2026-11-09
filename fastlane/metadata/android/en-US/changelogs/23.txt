@@ -1,0 +1,1 @@
+Compatible with Android 16: transparent system bars, and a dictation that stops cleanly when Android asks it to; the sound already recorded is kept and written at the next opening. Nothing else changes.

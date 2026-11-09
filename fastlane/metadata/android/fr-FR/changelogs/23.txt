@@ -1,0 +1,1 @@
+Compatible Android 16 : barres système transparentes, et une dictée qui s'arrête proprement quand Android le demande ; le son déjà enregistré est gardé et écrit à l'ouverture suivante. Rien d'autre ne change.

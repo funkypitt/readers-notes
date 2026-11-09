@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto Backup (Android 6-11): keep the notes and the settings, leave out the raw sound of a
+     dictation still waiting for its words and the pictures, which could blow the 25 MB quota and
+     cancel the whole backup (pictures are on the synced folder when a sync is set up). -->
+<full-backup-content>
+    <exclude domain="file" path="dictation" />
+    <exclude domain="file" path="pictures" />
+</full-backup-content>
