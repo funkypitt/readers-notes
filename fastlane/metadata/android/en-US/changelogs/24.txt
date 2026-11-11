@@ -1,0 +1,1 @@
+The language of a dictation is now recognised by listening to it, unless you set one yourself. It is named under the dictate row and shown once heard (« language heard: English »). If the language set in the settings plainly isn't the one spoken, the note is written in the language heard, and the app says so.
