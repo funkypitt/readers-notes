@@ -73,10 +73,15 @@
     <string name="dictate_refused">для диктовки нужен микрофон</string>
     <string name="stop">стоп</string>
     <string name="language">язык речи</string>
-    <string name="language_auto">определяется</string>
+    <string name="language_auto">определяется автоматически</string>
     <string name="model_not_yet">нужно скачать</string>
     <string name="phase_model">загрузка модели · %1$d%%</string>
     <string name="phase_transcribe">расшифровка · %1$d%%</string>
+    <string name="phase_language">определение языка речи…</string>
+    <string name="phase_transcribe_lang">расшифровка · %1$s · %2$d%%</string>
+    <string name="dictate_language">диктовка · язык: %1$s</string>
+    <string name="language_heard">слышен язык: %1$s</string>
+    <string name="language_heard_setting">слышен язык: %1$s — в настройках: %2$s</string>
     <string name="recommended">рекомендуется</string>
     <string name="quality_high_hint">вчетверо медленнее</string>
     <string name="quality_normal">обычная</string>

@@ -37,6 +37,8 @@ fun dictationStatus(noteId: String): String? {
     val live = DictateService.Live
     return when {
         live.workingOn == noteId && live.phase == "model" -> stringResource(R.string.phase_model, live.percent)
+        live.workingOn == noteId && live.phase == "language" -> stringResource(R.string.phase_language)
+        live.workingOn == noteId && live.language.isNotEmpty() -> stringResource(R.string.phase_transcribe_lang, spokenName(LocalContext.current, live.language), live.percent)
         live.workingOn == noteId -> stringResource(R.string.phase_transcribe, live.percent)
         else -> null
     }
@@ -86,4 +88,27 @@ fun DictateRow(secondary: String? = null, target: () -> String) {
             TextRow("● " + stringResource(R.string.dictate), size = typo.title, secondary = secondary) { tick(); dictate() }
         }
     }
+}
+
+/** A language in the phone's words, inside a sentence: "anglais" on a French phone; "" is found by listening. */
+fun spokenName(ctx: Context, code: String): String =
+    if (code.isBlank()) ctx.getString(R.string.language_auto)
+    else java.util.Locale.forLanguageTag(code).getDisplayLanguage(java.util.Locale.getDefault()).ifBlank { code }
+
+/**
+ * The language of dictation, right under the row that starts it, so that nobody dictates in one
+ * language while the phone expects another: the setting (« dictation · language: recognised
+ * automatically »), and once a dictation into [noteId] is written, the language it was heard in —
+ * with the setting beside it when the dictation plainly spoke another one. A tap opens the settings.
+ */
+@Composable
+fun DictateLanguage(setting: String, noteId: String? = null, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val heard = DictateService.Live.heard?.takeIf { noteId != null && it.noteId == noteId }
+    val text = when {
+        heard == null -> stringResource(R.string.dictate_language, spokenName(context, setting))
+        heard.setting.isEmpty() -> stringResource(R.string.language_heard, spokenName(context, heard.language))
+        else -> stringResource(R.string.language_heard_setting, spokenName(context, heard.language), spokenName(context, heard.setting))
+    }
+    Small(text, Modifier.padding(horizontal = rowPadH).padding(bottom = 6.dp).noRippleClickable(onClick = onClick), maxLines = 2)
 }

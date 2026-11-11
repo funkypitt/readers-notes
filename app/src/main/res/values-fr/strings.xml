@@ -73,10 +73,15 @@
     <string name="dictate_refused">la dictée a besoin du micro</string>
     <string name="stop">arrêter</string>
     <string name="language">langue parlée</string>
-    <string name="language_auto">détectée</string>
+    <string name="language_auto">reconnue automatiquement</string>
     <string name="model_not_yet">à récupérer</string>
     <string name="phase_model">téléchargement du modèle · %1$d%%</string>
     <string name="phase_transcribe">transcription · %1$d%%</string>
+    <string name="phase_language">écoute de la langue parlée…</string>
+    <string name="phase_transcribe_lang">transcription · %1$s · %2$d%%</string>
+    <string name="dictate_language">dictée · langue : %1$s</string>
+    <string name="language_heard">langue entendue : %1$s</string>
+    <string name="language_heard_setting">langue entendue : %1$s — réglage : %2$s</string>
     <string name="recommended">recommandé</string>
     <string name="quality_high_hint">4 fois plus lente</string>
     <string name="quality_normal">ordinaire</string>

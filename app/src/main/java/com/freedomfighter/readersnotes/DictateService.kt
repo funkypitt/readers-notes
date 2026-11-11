@@ -28,12 +28,14 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.freedomfighter.readers.speech.audio.Pcm
 import com.freedomfighter.readers.speech.audio.Resample
+import com.freedomfighter.readers.speech.whisper.Language
 import com.freedomfighter.readers.speech.whisper.Models
 import com.freedomfighter.readers.speech.whisper.Paragraphs
 import com.freedomfighter.readers.speech.whisper.Prompts
 import com.freedomfighter.readers.speech.whisper.Segment
 import com.freedomfighter.readers.speech.whisper.Vad
 import com.freedomfighter.readers.speech.whisper.WhisperSession
+import com.freedomfighter.readersnotes.ui.spokenName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,6 +48,7 @@ import java.io.BufferedOutputStream
 import java.io.DataInputStream
 import java.io.EOFException
 import java.io.File
+import java.io.RandomAccessFile
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** A failure already worded for the reader, in their language. */
@@ -60,6 +63,11 @@ private class Said(message: String) : Exception(message)
  * the next opening and is taken up again.
  *
  * The text goes where the cursor is when the note is open, to the end of the note otherwise.
+ *
+ * Before writing, the language spoken is found by listening (readers-speech `Language`): left to
+ * itself whisper guesses from the first seconds, and a wrong guess comes back as a fluent
+ * translation nobody notices. A language set by hand in the settings is kept unless the dictation
+ * plainly speaks another one; then that one is written, and the note's row says so.
  */
 class DictateService : Service() {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -108,6 +116,7 @@ class DictateService : Service() {
         startedAt = SystemClock.elapsedRealtime()
         recording.set(true)
         Live.message = ""; Live.noteId = noteId; Live.elapsedMs = 0L; Live.level = 0f; Live.recording = true
+        if (Live.heard?.noteId == noteId) Live.heard = null
         r.startRecording()
         reader = Thread {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO)
@@ -157,19 +166,20 @@ class DictateService : Service() {
                 while (true) {
                     val f = queue(this@DictateService).firstOrNull() ?: break
                     val noteId = f.name.substringBefore('-')
-                    Live.workingOn = noteId; Live.percent = 0
-                    val text = try {
-                        withContext(Dispatchers.Default) { transcribe(f) }
+                    Live.workingOn = noteId; Live.percent = 0; Live.language = ""
+                    val (text, heard) = try {
+                        withContext(Dispatchers.Default) { transcribe(f, noteId) }
                     } catch (e: Exception) {
                         // The sound stays: the next opening tries again (no network for the model, say).
                         Live.message = (if (e is Said) e.message!! else getString(R.string.dictate_failed, e.message ?: e.javaClass.simpleName)).take(120)
                         break
                     }
                     f.delete()
+                    Live.heard = heard
                     deliver(noteId, text)
                 }
             } finally {
-                Live.workingOn = ""; Live.phase = ""; Live.percent = 0
+                Live.workingOn = ""; Live.phase = ""; Live.percent = 0; Live.language = ""
                 working = false
                 // A dictation that ended while this pass was closing starts another one.
                 if (queue(this@DictateService).isNotEmpty() && Live.message.isEmpty()) work() else finish()
@@ -177,7 +187,8 @@ class DictateService : Service() {
         }
     }
 
-    private fun transcribe(f: File): String {
+    /** The words of [f], and the language heard when it is worth saying (see [Heard]). */
+    private fun transcribe(f: File, noteId: String): Pair<String, Heard?> {
         val app = application as App
         val s = app.prefs.settings.value
         val rate = f.name.removeSuffix(".pcm").substringAfterLast('.').toIntOrNull() ?: 16_000
@@ -189,11 +200,24 @@ class DictateService : Service() {
             Models.download(this, model, onProgress = { Live.percent = it.coerceIn(0, 100) })
         }
         val handle = Models.open(this, model) ?: throw Said(getString(R.string.dictate_no_model))
-        val lang = s.dictationLanguage.ifBlank { null }
-        Live.phase = "transcribe"; Live.percent = 0
+        val chosen = s.dictationLanguage
         val segments = ArrayList<Segment>()
         val total = (f.length() / 2).coerceAtLeast(1)
+        var heard: Heard? = null
         handle.use { WhisperSession(handle.path, Vad.modelPath(this)).use { session ->
+            // The language first, over the passages where speech is heard (one passage for a short
+            // dictation), then told to whisper for every piece.
+            Live.phase = "language"; Live.percent = 0
+            val found = Language.detect(session, total * 16_000 / rate, { at, n -> readAt(f, rate, at, n) }) { Live.percent = it }
+            val other = Language.suggest(chosen, found)
+            val lang = when {
+                chosen.isBlank() -> found?.language
+                other != null -> other
+                else -> chosen
+            }
+            Live.language = lang ?: ""
+            Live.phase = "transcribe"; Live.percent = 0
+            pushNotification()
             DataInputStream(f.inputStream().buffered()).use { input ->
                 var done = 0L
                 while (true) {
@@ -209,8 +233,27 @@ class DictateService : Service() {
                     done += piece.size
                 }
             }
+            // Said with the result when the language was not simply the one set by hand: found by
+            // listening, or heard instead of the setting. When nothing could be told beforehand,
+            // whisper's own guess on the last piece.
+            val said = lang ?: session.language().takeIf { it.isNotBlank() && it != "auto" }
+            if (said != null && (chosen.isBlank() || other != null)) heard = Heard(noteId, said, if (other != null) chosen else "")
         } }
-        return Paragraphs.build(segments, "").trim()
+        return Paragraphs.build(segments, "").trim() to heard
+    }
+
+    /** [n] samples at 16 kHz from [at] (16 kHz samples) in the raw file [f] recorded at [rate]. */
+    private fun readAt(f: File, rate: Int, at: Long, n: Int): FloatArray {
+        val from = at * rate / 16_000
+        val count = (n.toLong() * rate / 16_000).toInt()
+        val bytes = ByteArray(count * 2)
+        var got = 0
+        RandomAccessFile(f, "r").use { raf ->
+            raf.seek(from * 2)
+            while (got < bytes.size) { val k = raf.read(bytes, got, bytes.size - got); if (k < 0) break; got += k }
+        }
+        val pcm = FloatArray(got / 2) { i -> ((bytes[2 * i].toInt() and 0xff) or (bytes[2 * i + 1].toInt() shl 8)).toShort() / 32768f }
+        return if (rate == 16_000) pcm else Resample.to(Pcm(pcm, rate), 16_000).samples
     }
 
     private fun readPiece(input: DataInputStream, samples: Int): FloatArray {
@@ -292,9 +335,18 @@ class DictateService : Service() {
         if (recorder != null) {
             b.setContentTitle(getString(R.string.dictating)).setUsesChronometer(true).setWhen(System.currentTimeMillis() - (SystemClock.elapsedRealtime() - startedAt)).setShowWhen(true)
             b.addAction(0, getString(R.string.stop), PendingIntent.getService(this, 1, Intent(this, DictateService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
-        } else b.setContentTitle(getString(R.string.transcribing_plain)).setShowWhen(false)
+        } else {
+            b.setContentTitle(getString(R.string.transcribing_plain)).setShowWhen(false)
+            if (Live.language.isNotEmpty()) b.setContentText(getString(R.string.language_heard, spokenName(this, Live.language)))
+        }
         return b.build()
     }
+
+    /**
+     * The language a dictation into [noteId] was written in, shown under its row: found by
+     * listening, or — when [setting] is not empty — heard instead of the language set by hand.
+     */
+    data class Heard(val noteId: String, val language: String, val setting: String)
 
     /** What was written, on its way to the open note. */
     class Arrival(val noteId: String, val text: String)
@@ -308,7 +360,11 @@ class DictateService : Service() {
         var level by mutableFloatStateOf(0f)
         /** The note whose words are being written. */
         var workingOn by mutableStateOf("")
-        var phase by mutableStateOf("")   // model | transcribe
+        var phase by mutableStateOf("")   // model | language | transcribe
+        /** The language being written, once known ("" before, or when whisper is left to guess). */
+        var language by mutableStateOf("")
+        /** The language the last dictation was written in, when worth saying. */
+        var heard by mutableStateOf<Heard?>(null)
         var percent by mutableIntStateOf(0)
         /** Said once under the row: nothing heard, or what went wrong. */
         var message by mutableStateOf("")

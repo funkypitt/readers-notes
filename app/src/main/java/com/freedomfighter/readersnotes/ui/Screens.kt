@@ -191,6 +191,7 @@ fun NotesScreen(nav: Nav, app: App, folder: String? = null, inFolders: Boolean =
                     }
                 } }
             }
+            if (!books) DictateLanguage(settings.dictationLanguage) { nav.push(Screen.Settings) }
             if (live.message.isNotEmpty()) Small(live.message, Modifier.padding(horizontal = rowPadH).padding(bottom = 6.dp), maxLines = 2)
             if (status.isNotEmpty() || !settings.configured) {
                 Small(if (settings.configured) status else stringResource(R.string.not_synced), Modifier.padding(horizontal = rowPadH).padding(bottom = 10.dp).noRippleClickable { if (settings.configured) app.sync() else nav.push(Screen.Settings) }, maxLines = 1)
@@ -368,6 +369,7 @@ fun FoldersScreen(nav: Nav, app: App) {
                 Box(Modifier.weight(1f)) { Side(end = false) { TextRow(stringResource(R.string.new_note), size = typo.title) { nav.push(Screen.Edit(app.store.create())) } } }
                 Box(Modifier.weight(1f)) { Side(start = false) { DictateRow { app.store.create().also { nav.push(Screen.Edit(it)) } } } }
             }
+            DictateLanguage(settings.dictationLanguage) { nav.push(Screen.Settings) }
             if (live.message.isNotEmpty()) Small(live.message, Modifier.padding(horizontal = rowPadH).padding(bottom = 6.dp), maxLines = 2)
             if (status.isNotEmpty() || !settings.configured) {
                 Small(if (settings.configured) status else stringResource(R.string.not_synced), Modifier.padding(horizontal = rowPadH).padding(bottom = 10.dp).noRippleClickable { if (settings.configured) app.sync() else nav.push(Screen.Settings) }, maxLines = 1)
@@ -550,6 +552,7 @@ fun EditScreen(nav: Nav, app: App, id: String) {
                 Box(Modifier.weight(1f)) { Side(end = false) { DictateRow(secondary = dictationStatus(id) ?: live.message.ifEmpty { null }) { id } } }
                 Box(Modifier.weight(1f)) { Side(start = false) { TextRow(stringResource(R.string.draw), size = typo.title) { draw() } } }
             }
+            DictateLanguage(settings.dictationLanguage, noteId = id) { nav.push(Screen.Settings) }
             Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
         }
         if (menu) TextMenu(null, buildList {

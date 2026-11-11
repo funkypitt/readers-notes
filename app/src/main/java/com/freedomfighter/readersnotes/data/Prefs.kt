@@ -23,9 +23,9 @@ data class Settings(
     val username: String = "",
     val password: String = "",
     val syncOnOpen: Boolean = true,
-    /** Dictation: the whisper model ("high" = careful, "normal") and the language spoken ("" = detected). */
+    /** Dictation: the whisper model ("high" = careful, "normal") and the language spoken ("" = found by listening). */
     val dictationModel: String = "high",
-    val dictationLanguage: String = Prefs.deviceLanguage(),
+    val dictationLanguage: String = "",
     /** Notes filed in folders (off: one list, as before). */
     val useFolders: Boolean = false
 ) {
@@ -56,7 +56,7 @@ class Prefs(context: Context) {
         syncOnOpen = sp.getBoolean("sync_on_open", true),
         useFolders = sp.getBoolean("folders", false),
         dictationModel = sp.getString("dictation_model", "high") ?: "high",
-        dictationLanguage = sp.getString("dictation_language", deviceLanguage()) ?: deviceLanguage()
+        dictationLanguage = languageSetting(sp.getString("dictation_language", null))
     )
     private inline fun <reified E : Enum<E>> enumOr(name: String?, default: E): E =
         name?.let { runCatching { enumValueOf<E>(it) }.getOrNull() } ?: default
@@ -77,7 +77,18 @@ class Prefs(context: Context) {
 
     companion object {
         fun deviceLanguage(): String = java.util.Locale.getDefault().language.takeIf { it.isNotBlank() } ?: "en"
-        /** What the language row offers: the phone's language, English, detected. */
-        fun languages(): List<String> = listOf(deviceLanguage(), "en", "").distinct()
+        /**
+         * What the language row offers: found by listening first — the default — then the phone's
+         * language and English.
+         */
+        fun languages(): List<String> = listOf("", deviceLanguage(), "en").distinct()
+
+        /**
+         * The dictation language as stored. Nothing stored means it was never chosen: it used to
+         * stand for the phone's language, and so a French phone wrote English dictations as French
+         * translations; it is now found by listening. A language stored was picked in the settings
+         * by hand and stays — a dictation that plainly speaks another one is written in that one.
+         */
+        fun languageSetting(stored: String?): String = stored ?: ""
     }
 }
